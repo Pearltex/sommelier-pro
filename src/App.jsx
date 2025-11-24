@@ -18,13 +18,30 @@ const Icons = {
 
 const APP_TITLE = "SOMMELIER PRO";
 
-// --- GEMINI AI ---
-const callGemini = async (apiKey, prompt) => {
+// --- GEMINI AI AVANZATA (TESTO + IMMAGINI) ---
+const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
+    
+    // Prepariamo il contenuto
+    const parts = [{ text: prompt }];
+    
+    // Se c'è un'immagine, la aggiungiamo alla richiesta
+    if (base64Image) {
+        // Rimuoviamo l'intestazione del base64 (es. "data:image/jpeg;base64,") per inviarla a Google
+        const imageContent = base64Image.split(",")[1];
+        parts.push({
+            inline_data: {
+                mime_type: "image/jpeg",
+                data: imageContent
+            }
+        });
+    }
+
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: parts }] })
         });
         const data = await response.json();
         if (data.error) throw new Error(data.error.message);
@@ -276,6 +293,8 @@ function HomeView({ startSession, logs, cellar, onExp, onImp }) {
 function SessionManager({ session, setSession, onSave, onCancel, apiKey, db }) {
     const [step, setStep] = useState(session.step);
     const [item, setItem] = useState(session.items[0] || {});
+    const [tempGrape, setTempGrape] = useState("");
+    const [tempPerc, setTempPerc] = useState("");
     const [tempFriend, setTempFriend] = useState("");
     const [tempDescAis, setTempDescAis] = useState("");
     const [isAiLoading, setIsAiLoading] = useState(false);
@@ -291,16 +310,96 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey, db }) {
     };
 
     const handleSmartFill = async () => {
-        if (!item.wine) return alert("Inserisci il nome!");
-        setIsAiLoading(true);
-        try {
-            const prompt = `Vino "${item.wine}". JSON valido: { "prod": "Produttore", "type": "Tipologia", "method": "Metodo", "price": 0 }`;
-            const text = await callGemini(apiKey, prompt);
-            const data = JSON.parse(text.replace(/```json|```/g, '').trim());
-            setItem(prev => ({ ...prev, ...data }));
-        } catch (e) { alert("Errore AI"); } finally { setIsAiLoading(false); }
+    // Controllo: serve almeno il nome O una foto
+    if (!item.wine && !item.food && !item.imgWine && !item.imgFood) return alert("Inserisci un nome o una foto!");
+    
+    setIsAiLoading(true);
+    try {
+        let prompt = "";
+        let imageToSend = null;
+
+        // Se stiamo analizzando un VINO
+        if (item.wine || item.imgWine) {
+            imageToSend = item.imgWine;
+            prompt = `
+                Analizza questo vino (dal nome "${item.wine || ''}" o dall'immagine etichetta).
+                Restituisci ESCLUSIVAMENTE un JSON valido (senza markdown) con questi campi:
+                {
+                    "wine": "Nome completo preciso",
+                    "prod": "Nome Produttore",
+                    "year": "Anno (se visibile o deducibile, numero o stringa vuota)",
+                    "type": "Tipologia (es. Rosso, Bianco, Bollicine...)",
+                    "method": "Metodo (es. Classico, Charmat, Barrique, Acciaio...)",
+                    "alcohol": "Gradazione alcolica (solo numero, es. 13.5)",
+                    "price": "Prezzo medio stimato in enoteca (solo numero)",
+                    "grapes": [ {"name": "Nome Vitigno", "perc": 100} ] 
+                    // Se è un blend, stima le percentuali (es. cabernet 85, cabernet franc 15). La somma deve fare 100.
+                }
+            `;
+        } 
+        // Se stiamo analizzando un PIATTO
+        else if (item.food || item.imgFood) {
+            imageToSend = item.imgFood;
+            prompt = `
+                Analizza questo piatto (dal nome "${item.food || ''}" o dall'immagine).
+                Restituisci ESCLUSIVAMENTE un JSON valido (senza markdown) con questi campi:
+                {
+                    "food": "Nome preciso del piatto",
+                    "desc": "Breve descrizione degli ingredienti principali"
+                }
+            `;
+        }
+
+        // Chiamata all'AI
+        const text = await callGemini(apiKey, prompt, imageToSend);
+        
+        // Pulizia del risultato JSON
+        const jsonString = text.replace(/```json|```/g, '').trim();
+        const data = JSON.parse(jsonString);
+        
+        // Aggiorniamo i dati
+        setItem(prev => ({ ...prev, ...data }));
+        
+    } catch (e) { 
+        console.error(e);
+        alert("Errore AI: " + e.message); 
+    } finally { 
+        setIsAiLoading(false); 
+    }
+};
+// --- LOGICA VITIGNI ---
+    const currentGrapeTotal = (item.grapes || []).reduce((acc, g) => acc + parseInt(g.perc || 0), 0);
+
+    const addGrape = () => {
+        if (!tempGrape || !tempPerc) return;
+        const p = parseInt(tempPerc);
+        if (p <= 0) return alert("La percentuale deve essere maggiore di 0");
+        if (currentGrapeTotal + p > 100) return alert(`Totale supera 100%! Hai ancora a disposizione il ${100 - currentGrapeTotal}%`);
+        
+        setItem(prev => ({ 
+            ...prev, 
+            grapes: [...(prev.grapes || []), { name: tempGrape, perc: p }] 
+        }));
+        setTempGrape(""); 
+        setTempPerc("");
     };
 
+    const addResidualGrape = () => {
+        const left = 100 - currentGrapeTotal;
+        if (left > 0) {
+            setItem(prev => ({ 
+                ...prev, 
+                grapes: [...(prev.grapes || []), { name: "Altri vitigni", perc: left }] 
+            }));
+        }
+    };
+
+    const removeGrape = (idx) => {
+        setItem(prev => ({ 
+            ...prev, 
+            grapes: prev.grapes.filter((_, i) => i !== idx) 
+        }));
+    };
     const handlePhoto = async (e, type) => { const f = e.target.files[0]; if (f) { const b64 = await resizeImage(f); setItem(prev => ({ ...prev, [type]: b64 })); } };
     
     const addItem = () => { 
@@ -379,7 +478,12 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey, db }) {
             
             {session.mode !== 'Degustazione' && session.mode !== 'Acquisto' && (
                 <Card>
-                    <div className="flex gap-2 items-end"><div className="flex-1"><Input label="Piatto" value={item.food || ''} onChange={e => setItem({...item, food: e.target.value})} /></div><div className="mb-3"><input type="file" ref={fileInputFood} hidden accept="image/*" onChange={(e) => handlePhoto(e, 'imgFood')} /><button onClick={() => fileInputFood.current.click()} className="p-3 rounded-xl border bg-gray-50 text-gray-400"><Icons.Camera size={24}/></button></div></div>
+                    <div className="flex gap-2 items-end"><div className="flex-1 flex items-end gap-2">
+    <Input label="Piatto" value={item.food || ''} onChange={e => setItem({...item, food: e.target.value})} />
+    <button onClick={handleSmartFill} disabled={isAiLoading} className="mb-3 p-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl shadow-lg shadow-purple-200 disabled:opacity-50">
+        {isAiLoading ? <Icons.Loader2 size={20} className="animate-spin"/> : <Icons.Sparkles size={20}/>}
+    </button>
+</div><div className="mb-3"><input type="file" ref={fileInputFood} hidden accept="image/*" onChange={(e) => handlePhoto(e, 'imgFood')} /><button onClick={() => fileInputFood.current.click()} className="p-3 rounded-xl border bg-gray-50 text-gray-400"><Icons.Camera size={24}/></button></div></div>
                     {item.imgFood && <div className="h-24 w-full bg-cover bg-center rounded-lg mt-2" style={{backgroundImage: `url(${item.imgFood})`}}></div>}
                 </Card>
             )}
@@ -393,8 +497,75 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey, db }) {
                 {item.imgWine && <div className="h-40 w-full bg-contain bg-no-repeat bg-center rounded-lg mt-2 mb-4 bg-gray-100" style={{backgroundImage: `url(${item.imgWine})`}}></div>}
                 <div className="flex gap-2"><Input label="Produttore" value={item.prod || ''} onChange={e => setItem({...item, prod: e.target.value})} /><div className="w-24"><Input label="Anno" type="number" value={item.year || ''} onChange={e => setItem({...item, year: e.target.value})} /></div></div>
                 <div className="flex gap-2"><Input label="Tipologia" placeholder="Rosso, Bianco..." value={item.type || ''} onChange={e => setItem({...item, type: e.target.value})} /><div className="w-1/2"><Select label="Metodo" value={item.method || ''} onChange={e => setItem({...item, method: e.target.value})} options={DB_METHODS} /></div></div>
-                <div className="w-1/3"><Input label="Prezzo €" type="number" value={item.price || ''} onChange={e => setItem({...item, price: e.target.value})} /></div>
-                {(session.mode === 'Acquisto' || item.buyPlace) && (<Input label="Dove l'hai preso?" placeholder="Enoteca..." value={item.buyPlace || ''} onChange={e => setItem({...item, buyPlace: e.target.value})} />)}
+{/* SEZIONE VITIGNI */}
+                <div className="bg-slate-50 p-3 rounded-xl border border-gray-200 mb-3">
+                    <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wide flex justify-between">
+                        <span>Uvaggio / Vitigni</span>
+                        <span className={currentGrapeTotal === 100 ? "text-emerald-500" : "text-orange-500"}>{currentGrapeTotal}% / 100%</span>
+                    </label>
+                    
+                    {/* Lista Vitigni Inseriti */}
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        {(item.grapes || []).map((g, i) => (
+                            <div key={i} className="flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded-lg text-xs font-bold shadow-sm">
+                                <span className="text-indigo-600">{g.perc}%</span>
+                                <span className="text-slate-700">{g.name}</span>
+                                <button onClick={() => removeGrape(i)} className="text-red-400 hover:text-red-600 ml-1">×</button>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Input Nuovo Vitigno */}
+                    {currentGrapeTotal < 100 && (
+                        <div className="flex gap-2 items-center">
+                            <div className="flex-1">
+                                <input 
+                                    className="w-full p-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none" 
+                                    placeholder="Es. Sangiovese" 
+                                    value={tempGrape} 
+                                    onChange={e => setTempGrape(e.target.value)} 
+                                />
+                            </div>
+                            <div className="w-16">
+                                <input 
+                                    type="number" 
+                                    className="w-full p-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none text-center" 
+                                    placeholder="%" 
+                                    value={tempPerc} 
+                                    onChange={e => setTempPerc(e.target.value)} 
+                                />
+                            </div>
+                            <button onClick={addGrape} className="bg-slate-800 text-white p-2 rounded-lg font-bold text-sm">+</button>
+                        </div>
+                    )}
+
+                    {/* Pulsante Rapido "Altri vitigni" */}
+                    {currentGrapeTotal < 100 && currentGrapeTotal > 0 && (
+                        <button onClick={addResidualGrape} className="mt-2 text-[10px] text-indigo-500 font-bold underline">
+                            + Aggiungi il restante {100 - currentGrapeTotal}% come "Altri vitigni"
+                        </button>
+                    )}
+                </div>
+<div className="flex gap-2">
+    <div className="flex-1">
+        <Input 
+            label="Alcol %" 
+            type="number" 
+            step="0.5" 
+            placeholder="13.5" 
+            value={item.alcohol || ''} 
+            onChange={e => setItem({...item, alcohol: e.target.value})} 
+        />
+    </div>
+    <div className="flex-1">
+        <Input 
+            label="Prezzo €" 
+            type="number" 
+            value={item.price || ''} 
+            onChange={e => setItem({...item, price: e.target.value})} 
+        />
+    </div>
+</div>                {(session.mode === 'Acquisto' || item.buyPlace) && (<Input label="Dove l'hai preso?" placeholder="Enoteca..." value={item.buyPlace || ''} onChange={e => setItem({...item, buyPlace: e.target.value})} />)}
             </Card>
 
             {session.mode !== 'Acquisto' && (
@@ -468,7 +639,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey, db }) {
                                     <Select label="Struttura" options={AIS_TERMS.CORPO} value={item.ais?.corpo || ''} onChange={e => setItem({...item, ais: {...item.ais, corpo: e.target.value}})} />
                                     <hr className="border-gray-300" />
                                     <Select label="Equilibrio" options={AIS_TERMS.EQUILIBRIO} value={item.ais?.equil || ''} onChange={e => setItem({...item, ais: {...item.ais, equil: e.target.value}})} />
-                                    <hr className="border-red-200 border-dashed" />
+                                    <hr className="border-gray-300" />
                                     <div className="bg-emerald-100/50 p-2 rounded-lg space-y-2">
                                         <h5 className="text-[10px] font-bold text-emerald-600 uppercase text-center">Analisi Retro-Olfattiva</h5>
                                         <div className="grid grid-cols-2 gap-2">
