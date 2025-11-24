@@ -57,8 +57,7 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
             parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
         }
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${apiKey}`, {
-            method: 'POST',
+const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, ...            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: parts }] })
         });
