@@ -21,82 +21,86 @@ const APP_TITLE = "SOMMELIER PRO";
 // --- GEMINI AI 4.0 (AUTO-DISCOVERY & SELF-HEALING) ---
 // --- GEMINI AI: VERSIONE SPIA (DIAGNOSTICA) ---
 // --- GEMINI AI: VERSIONE MULTI-PASS (ANTI-404) ---
+// --- GEMINI AI: VERSIONE INVESTIGATIVA (ULTIMA SPIAGGIA) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
-    if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
+    if (!apiKey) throw new Error("API Key mancante.");
 
-    // LISTA DI MODELLI DA PROVARE (In ordine di velocità/costo)
-    const MODELS_TO_TRY = [
-        "gemini-1.5-flash-latest", // Versione sempre aggiornata
-        "gemini-1.5-flash-002",    // Versione stabile recente
-        "gemini-1.5-flash-001",    // Versione stabile vecchia
-        "gemini-1.5-pro",          // Versione potente (più lenta)
-        "gemini-1.5-pro-latest"    // Ultima spiaggia
-    ];
+    // Helper per fare la richiesta
+    const makeRequest = async (modelName) => {
+        // Pulisce il nome (toglie "models/" se c'è)
+        const cleanName = modelName.replace("models/", "");
+        
+        const parts = [{ text: prompt }];
+        if (base64Image) {
+            const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
+            parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
+        }
 
-    const parts = [{ text: prompt }];
-    if (base64Image) {
-        const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
-        parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
-    }
+        // Usiamo v1beta che è più permissiva per i modelli nuovi
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: parts }] })
+        });
+        
+        const d = await res.json();
+        if (d.error) throw new Error(d.error.message);
+        return d;
+    };
 
-    let lastError = null;
+    // Parser della risposta
+    const parseData = (data) => {
+        if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta.");
+        let text = data.candidates[0].content.parts[0].text;
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const s = text.indexOf('{'); const e = text.lastIndexOf('}');
+        const sa = text.indexOf('['); const ea = text.lastIndexOf(']');
+        let start = -1, end = -1;
+        if (s !== -1 && (sa === -1 || s < sa)) { start = s; end = e; } else if (sa !== -1) { start = sa; end = ea; }
+        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
+        return JSON.parse(text);
+    };
 
-    // CICLO DEI TENTATIVI
-    for (const model of MODELS_TO_TRY) {
+    try {
+        // 1. Proviamo il modello standard più diffuso
+        return parseData(await makeRequest("gemini-1.5-flash"));
+    } catch (e) {
+        console.warn("Modello standard fallito. Avvio scansione account...", e);
+        
+        // 2. Se fallisce, SCANSIONIAMO l'account per vedere cosa c'è
         try {
-            console.log(`Tentativo con: ${model}`); // Debug console (invisibile all'utente)
+            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            const listData = await listRes.json();
             
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: parts }] })
-            });
-
-            const data = await response.json();
-
-            // Se è un errore 404 (Modello non trovato), passiamo al prossimo
-            if (data.error) {
-                if (data.error.code === 404 || data.error.message.includes("not found")) {
-                    lastError = `Modello ${model} non trovato.`;
-                    continue; // Vai al prossimo modello della lista
-                }
-                // Se è un errore diverso (es. Key sbagliata), ci fermiamo e lo mostriamo
-                throw new Error(data.error.message);
+            if (listData.error) {
+                alert(`ERRORE CHIAVE API:\n${listData.error.message}\n\nLa tua chiave sembra non valida o bloccata.`);
+                throw new Error("Chiave bloccata");
             }
 
-            // SE SIAMO QUI, HA FUNZIONATO! 🎉
-            if (!data.candidates || !data.candidates[0]) throw new Error("L'AI non ha risposto.");
+            // Filtriamo i modelli che supportano 'generateContent'
+            const myModels = (listData.models || [])
+                .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"))
+                .map(m => m.name.replace("models/", ""));
 
-            let text = data.candidates[0].content.parts[0].text;
-            
-            // Pulizia JSON
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const firstBracket = text.indexOf('{');
-            const lastBracket = text.lastIndexOf('}');
-            const firstSquare = text.indexOf('[');
-            const lastSquare = text.lastIndexOf(']');
-            
-            let start = -1, end = -1;
-            if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
-                start = firstBracket; end = lastBracket;
-            } else if (firstSquare !== -1) {
-                start = firstSquare; end = lastSquare;
+            if (myModels.length === 0) {
+                alert("Il tuo account Google non ha accesso a NESSUN modello Gemini.\nProva a creare la chiave con un altro account Google.");
+                throw new Error("Nessun modello disponibile");
             }
 
-            if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-            
-            return JSON.parse(text);
+            // MOSTRIAMO ALL'UTENTE COSA HA TROVATO (Così capiamo)
+            // alert(`Trovati ${myModels.length} modelli. Uso: ${myModels[0]}`);
 
-        } catch (e) {
-            lastError = e.message;
-            // Se non è un 404, potrebbe essere un problema di rete, continuiamo a provare
-            continue;
+            // 3. Usiamo il primo modello che abbiamo trovato
+            return parseData(await makeRequest(myModels[0]));
+
+        } catch (scanError) {
+            // Se fallisce anche la scansione
+            if (!scanError.message.includes("ERRORE CHIAVE")) {
+                alert("Impossibile recuperare la lista modelli.\n" + scanError.message);
+            }
+            throw scanError;
         }
     }
-
-    // Se finisce il ciclo e nessuno ha funzionato:
-    alert(`Tutti i modelli AI hanno fallito.\nUltimo errore: ${lastError}`);
-    throw new Error("Impossibile contattare l'AI.");
 };
 
 // --- UTILITY ---
