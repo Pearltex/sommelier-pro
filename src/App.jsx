@@ -20,26 +20,39 @@ const APP_TITLE = "SOMMELIER PRO";
 
 // --- GEMINI AI 2.0 (JSON STRICT MODE) ---
 // Questa versione forza l'AI a rispondere SOLO con JSON pulito per popolare i campi.
+// --- GEMINI AI 2.0 (FIXED MODEL) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
     
     const parts = [{ text: prompt }];
     if (base64Image) {
-        // Rimuoviamo l'intestazione del base64 se presente
+        // Gestione robusta del base64
         const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
         parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        // NOTA: Ho aggiunto "-latest" all'URL, che risolve quasi sempre l'errore "model not found"
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: parts }] })
         });
+
         const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
         
+        // Gestione errori specifica di Google
+        if (data.error) {
+            console.error("Gemini API Error Full:", data.error);
+            throw new Error(`Errore AI: ${data.error.message}`);
+        }
+        
+        if (!data.candidates || !data.candidates[0]) {
+             throw new Error("L'AI non ha restituito risultati. Riprova.");
+        }
+
         let text = data.candidates[0].content.parts[0].text;
+        
         // Pulizia chirurgica del JSON
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const firstBracket = text.indexOf('{');
@@ -47,7 +60,6 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
         const lastBracket = text.lastIndexOf('}');
         const lastSquare = text.lastIndexOf(']');
 
-        // Determina se è un oggetto o un array
         let start = -1, end = -1;
         if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
             start = firstBracket; end = lastBracket;
@@ -59,9 +71,11 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
             text = text.substring(start, end + 1);
         }
         return JSON.parse(text);
+
     } catch (error) { 
         console.error("Gemini Error:", error); 
-        throw new Error("Errore AI: " + error.message); 
+        // Mostriamo un errore più gentile all'utente
+        throw new Error(error.message || "Errore di connessione AI."); 
     }
 };
 
