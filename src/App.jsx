@@ -20,63 +20,78 @@ const APP_TITLE = "SOMMELIER PRO";
 
 // --- GEMINI AI 2.0 (JSON STRICT MODE) ---
 // Questa versione forza l'AI a rispondere SOLO con JSON pulito per popolare i campi.
-// --- GEMINI AI 2.0 (FIXED MODEL) ---
+// --- GEMINI AI 3.0 (MULTI-MODEL RETRY) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
     
+    // Lista di modelli da provare in ordine di priorità
+    const modelsToTry = [
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-001",
+        "gemini-1.5-flash-002",
+        "gemini-1.5-pro"
+    ];
+
     const parts = [{ text: prompt }];
     if (base64Image) {
-        // Gestione robusta del base64
         const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
         parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
     }
 
-    try {
-        // NOTA: Ho aggiunto "-latest" all'URL, che risolve quasi sempre l'errore "model not found"
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: parts }] })
-        });
+    let lastError = null;
 
-        const data = await response.json();
-        
-        // Gestione errori specifica di Google
-        if (data.error) {
-            console.error("Gemini API Error Full:", data.error);
-            throw new Error(`Errore AI: ${data.error.message}`);
+    // Tentativo a cascata sui modelli
+    for (const model of modelsToTry) {
+        try {
+            console.log(`Tentativo con modello: ${model}...`); // Log per debug
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: parts }] })
+            });
+
+            const data = await response.json();
+
+            // Se troviamo un errore "Not Found", passiamo al prossimo modello
+            if (data.error) {
+                if (data.error.code === 404 || data.error.message.includes("not found")) {
+                    console.warn(`Modello ${model} non trovato, passo al prossimo.`);
+                    lastError = data.error.message;
+                    continue; // Salta al prossimo giro del loop
+                }
+                throw new Error(data.error.message); // Altri errori (es. Key non valida) fermano tutto
+            }
+
+            // Se siamo qui, ha funzionato! Parsiamo la risposta
+            let text = data.candidates[0].content.parts[0].text;
+            
+            // Pulizia JSON
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const firstBracket = text.indexOf('{');
+            const firstSquare = text.indexOf('[');
+            const lastBracket = text.lastIndexOf('}');
+            const lastSquare = text.lastIndexOf(']');
+            
+            let start = -1, end = -1;
+            if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
+                start = firstBracket; end = lastBracket;
+            } else if (firstSquare !== -1) {
+                start = firstSquare; end = lastSquare;
+            }
+
+            if (start !== -1 && end !== -1) {
+                text = text.substring(start, end + 1);
+            }
+            return JSON.parse(text);
+
+        } catch (e) {
+            lastError = e.message;
+            // Se non è un errore di "non trovato", potrebbe essere la connessione, riproviamo col prossimo per sicurezza
+            continue; 
         }
-        
-        if (!data.candidates || !data.candidates[0]) {
-             throw new Error("L'AI non ha restituito risultati. Riprova.");
-        }
-
-        let text = data.candidates[0].content.parts[0].text;
-        
-        // Pulizia chirurgica del JSON
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const firstBracket = text.indexOf('{');
-        const firstSquare = text.indexOf('[');
-        const lastBracket = text.lastIndexOf('}');
-        const lastSquare = text.lastIndexOf(']');
-
-        let start = -1, end = -1;
-        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
-            start = firstBracket; end = lastBracket;
-        } else if (firstSquare !== -1) {
-            start = firstSquare; end = lastSquare;
-        }
-
-        if (start !== -1 && end !== -1) {
-            text = text.substring(start, end + 1);
-        }
-        return JSON.parse(text);
-
-    } catch (error) { 
-        console.error("Gemini Error:", error); 
-        // Mostriamo un errore più gentile all'utente
-        throw new Error(error.message || "Errore di connessione AI."); 
     }
+
+    throw new Error(`Nessun modello AI disponibile. Ultimo errore: ${lastError}`);
 };
 
 // --- UTILITY ---
