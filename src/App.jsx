@@ -20,74 +20,83 @@ const APP_TITLE = "SOMMELIER PRO";
 
 // --- GEMINI AI 4.0 (AUTO-DISCOVERY & SELF-HEALING) ---
 // --- GEMINI AI: VERSIONE SPIA (DIAGNOSTICA) ---
+// --- GEMINI AI: VERSIONE MULTI-PASS (ANTI-404) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
-    // SPIA 1: Controllo Chiave
-    if (!apiKey) {
-        alert("⛔ ERRORE: Manca la API Key nelle impostazioni!");
-        throw new Error("Key mancante");
+    if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
+
+    // LISTA DI MODELLI DA PROVARE (In ordine di velocità/costo)
+    const MODELS_TO_TRY = [
+        "gemini-1.5-flash-latest", // Versione sempre aggiornata
+        "gemini-1.5-flash-002",    // Versione stabile recente
+        "gemini-1.5-flash-001",    // Versione stabile vecchia
+        "gemini-1.5-pro",          // Versione potente (più lenta)
+        "gemini-1.5-pro-latest"    // Ultima spiaggia
+    ];
+
+    const parts = [{ text: prompt }];
+    if (base64Image) {
+        const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
+        parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
     }
 
-    // Usiamo il modello standard
-    const MODEL = "gemini-1.5-flash"; 
-    alert(`1. Inizio chiamata a Google...\nModello: ${MODEL}\nKey (ultimi 4): ...${apiKey.slice(-4)}`);
+    let lastError = null;
 
-    try {
-        const parts = [{ text: prompt }];
-        if (base64Image) {
-            const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
-            parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
+    // CICLO DEI TENTATIVI
+    for (const model of MODELS_TO_TRY) {
+        try {
+            console.log(`Tentativo con: ${model}`); // Debug console (invisibile all'utente)
+            
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: parts }] })
+            });
+
+            const data = await response.json();
+
+            // Se è un errore 404 (Modello non trovato), passiamo al prossimo
+            if (data.error) {
+                if (data.error.code === 404 || data.error.message.includes("not found")) {
+                    lastError = `Modello ${model} non trovato.`;
+                    continue; // Vai al prossimo modello della lista
+                }
+                // Se è un errore diverso (es. Key sbagliata), ci fermiamo e lo mostriamo
+                throw new Error(data.error.message);
+            }
+
+            // SE SIAMO QUI, HA FUNZIONATO! 🎉
+            if (!data.candidates || !data.candidates[0]) throw new Error("L'AI non ha risposto.");
+
+            let text = data.candidates[0].content.parts[0].text;
+            
+            // Pulizia JSON
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            const firstBracket = text.indexOf('{');
+            const lastBracket = text.lastIndexOf('}');
+            const firstSquare = text.indexOf('[');
+            const lastSquare = text.lastIndexOf(']');
+            
+            let start = -1, end = -1;
+            if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
+                start = firstBracket; end = lastBracket;
+            } else if (firstSquare !== -1) {
+                start = firstSquare; end = lastSquare;
+            }
+
+            if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
+            
+            return JSON.parse(text);
+
+        } catch (e) {
+            lastError = e.message;
+            // Se non è un 404, potrebbe essere un problema di rete, continuiamo a provare
+            continue;
         }
-
-        // SPIA 2: Lancio la richiesta
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: parts }] })
-        });
-
-        // SPIA 3: Controllo lo stato HTTP
-        if (response.status !== 200) {
-            const errorData = await response.json();
-            alert(`⛔ ERRORE SERVER GOOGLE (Status ${response.status}):\n${errorData.error?.message || "Errore sconosciuto"}`);
-            throw new Error(errorData.error?.message);
-        }
-
-        const data = await response.json();
-
-        // SPIA 4: Controllo i dati ricevuti
-        if (!data.candidates || !data.candidates[0]) {
-            alert("⚠️ Google ha risposto OK (200), ma non ha mandato testo.");
-            throw new Error("Nessun candidato");
-        }
-
-        alert("✅ Successo! Elaborazione risposta...");
-
-        let text = data.candidates[0].content.parts[0].text;
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        
-        const firstBracket = text.indexOf('{');
-        const lastBracket = text.lastIndexOf('}');
-        const firstSquare = text.indexOf('[');
-        const lastSquare = text.lastIndexOf(']');
-
-        let start = -1, end = -1;
-        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
-            start = firstBracket; end = lastBracket;
-        } else if (firstSquare !== -1) {
-            start = firstSquare; end = lastSquare;
-        }
-
-        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-        
-        return JSON.parse(text);
-
-    } catch (error) {
-        // Se l'errore non è già stato mostrato da un alert sopra
-        if (!error.message.includes("ERRORE")) {
-            alert("⛔ ERRORE IMPREVISTO:\n" + error.message);
-        }
-        throw error;
     }
+
+    // Se finisce il ciclo e nessuno ha funzionato:
+    alert(`Tutti i modelli AI hanno fallito.\nUltimo errore: ${lastError}`);
+    throw new Error("Impossibile contattare l'AI.");
 };
 
 // --- UTILITY ---
