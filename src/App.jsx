@@ -20,43 +20,18 @@ const APP_TITLE = "SOMMELIER PRO";
 
 
 // --- GEMINI AI (STABLE V1 VERSION) ---
+// --- GEMINI AI 4.0 (AUTO-DISCOVERY & SELF-HEALING) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
-    
-    // Proviamo SOLO il modello Flash stabile sulla versione v1 (non beta)
-    const model = "gemini-1.5-flash"; 
-    
-    const parts = [{ text: prompt }];
-    if (base64Image) {
-        const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
-        parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
-    }
 
-    try {
-        // NOTA BENE: Ho tolto "v1beta" e messo "v1" nell'URL
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: parts }] })
-        });
-
-        const data = await response.json();
-
-        if (data.error) {
-            console.error("Gemini Error:", data.error);
-            // Se ancora errore, suggeriamo all'utente cosa fare
-            throw new Error(`Errore AI (${data.error.code}): ${data.error.message}. Controlla di aver preso la key su aistudio.google.com`);
-        }
-
-        if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta dall'AI.");
-
+    // Funzione interna per pulire la risposta JSON
+    const parseResponse = (data) => {
+        if (!data.candidates || !data.candidates[0]) throw new Error("L'AI non ha risposto.");
         let text = data.candidates[0].content.parts[0].text;
-        
-        // Pulizia JSON
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const firstBracket = text.indexOf('{');
-        const firstSquare = text.indexOf('[');
         const lastBracket = text.lastIndexOf('}');
+        const firstSquare = text.indexOf('[');
         const lastSquare = text.lastIndexOf(']');
         
         let start = -1, end = -1;
@@ -67,12 +42,63 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
         }
 
         if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-        
         return JSON.parse(text);
+    };
 
-    } catch (error) { 
-        console.error("Gemini Call Failed", error); 
-        throw error; 
+    // Funzione per eseguire la richiesta con un modello specifico
+    const performRequest = async (modelName) => {
+        // Pulisce il nome del modello se arriva come "models/gemini..."
+        const cleanName = modelName.replace("models/", "");
+        console.log("Provo con modello:", cleanName); // Debug nella console
+        
+        const parts = [{ text: prompt }];
+        if (base64Image) {
+            const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
+            parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
+        }
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: parts }] })
+        });
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        return parseResponse(data);
+    };
+
+    // --- LOGICA PRINCIPALE ---
+    try {
+        // TENTATIVO 1: Proviamo il modello Flash standard
+        return await performRequest("gemini-1.5-flash");
+    } catch (error) {
+        // Se errore è "Not Found" (404), la chiave non vede quel modello. Cerchiamo quelli disponibili.
+        if (error.message.toLowerCase().includes("not found") || error.message.includes("404")) {
+            console.warn("Modello standard non trovato. Avvio Auto-Discovery...");
+            try {
+                // Chiediamo la lista dei modelli disponibili per QUESTA chiave
+                const listReq = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                const listData = await listReq.json();
+                
+                if (listData.models) {
+                    // Cerchiamo il primo modello "gemini" che supporta "generateContent"
+                    const validModel = listData.models.find(m => 
+                        m.name.includes("gemini") && 
+                        m.supportedGenerationMethods.includes("generateContent")
+                    );
+                    
+                    if (validModel) {
+                        // TENTATIVO 2: Usiamo il modello trovato (es. gemini-pro o gemini-1.0-pro)
+                        return await performRequest(validModel.name);
+                    }
+                }
+            } catch (listError) {
+                console.error("Auto-Discovery fallito:", listError);
+            }
+        }
+        // Se siamo qui, nessun tentativo ha funzionato
+        throw error;
     }
 };
 
