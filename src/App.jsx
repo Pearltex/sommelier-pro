@@ -19,60 +19,72 @@ const Icons = {
 const APP_TITLE = "SOMMELIER PRO";
 
 // --- GEMINI AI 4.0 (AUTO-DISCOVERY & SELF-HEALING) ---
+// --- GEMINI AI: VERSIONE SPIA (DIAGNOSTICA) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
-    if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
+    // SPIA 1: Controllo Chiave
+    if (!apiKey) {
+        alert("⛔ ERRORE: Manca la API Key nelle impostazioni!");
+        throw new Error("Key mancante");
+    }
 
-    const parseResponse = (data) => {
-        if (!data.candidates || !data.candidates[0]) throw new Error("L'AI non ha risposto.");
-        let text = data.candidates[0].content.parts[0].text;
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const firstBracket = text.indexOf('{');
-        const lastBracket = text.lastIndexOf('}');
-        const firstSquare = text.indexOf('[');
-        
-        let start = -1, end = -1;
-        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
-            start = firstBracket; end = lastBracket;
-        } else if (firstSquare !== -1) {
-            start = firstSquare; text.lastIndexOf(']');
-        }
+    // Usiamo il modello standard
+    const MODEL = "gemini-1.5-flash"; 
+    alert(`1. Inizio chiamata a Google...\nModello: ${MODEL}\nKey (ultimi 4): ...${apiKey.slice(-4)}`);
 
-        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-        return JSON.parse(text);
-    };
-
-    const performRequest = async (modelName) => {
-        const cleanName = modelName.replace("models/", "");
+    try {
         const parts = [{ text: prompt }];
         if (base64Image) {
             const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
             parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
         }
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${apiKey}`, {
+        // SPIA 2: Lancio la richiesta
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: parts }] })
         });
-        
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-        return parseResponse(data);
-    };
 
-    try {
-        return await performRequest("gemini-1.5-flash");
+        // SPIA 3: Controllo lo stato HTTP
+        if (response.status !== 200) {
+            const errorData = await response.json();
+            alert(`⛔ ERRORE SERVER GOOGLE (Status ${response.status}):\n${errorData.error?.message || "Errore sconosciuto"}`);
+            throw new Error(errorData.error?.message);
+        }
+
+        const data = await response.json();
+
+        // SPIA 4: Controllo i dati ricevuti
+        if (!data.candidates || !data.candidates[0]) {
+            alert("⚠️ Google ha risposto OK (200), ma non ha mandato testo.");
+            throw new Error("Nessun candidato");
+        }
+
+        alert("✅ Successo! Elaborazione risposta...");
+
+        let text = data.candidates[0].content.parts[0].text;
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        const firstBracket = text.indexOf('{');
+        const lastBracket = text.lastIndexOf('}');
+        const firstSquare = text.indexOf('[');
+        const lastSquare = text.lastIndexOf(']');
+
+        let start = -1, end = -1;
+        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
+            start = firstBracket; end = lastBracket;
+        } else if (firstSquare !== -1) {
+            start = firstSquare; end = lastSquare;
+        }
+
+        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
+        
+        return JSON.parse(text);
+
     } catch (error) {
-        if (error.message.toLowerCase().includes("not found") || error.message.includes("404")) {
-            console.warn("Modello standard non trovato. Avvio Auto-Discovery...");
-            try {
-                const listReq = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-                const listData = await listReq.json();
-                if (listData.models) {
-                    const validModel = listData.models.find(m => m.name.includes("gemini") && m.supportedGenerationMethods.includes("generateContent"));
-                    if (validModel) return await performRequest(validModel.name);
-                }
-            } catch (listError) { console.error("Auto-Discovery fallito:", listError); }
+        // Se l'errore non è già stato mostrato da un alert sopra
+        if (!error.message.includes("ERRORE")) {
+            alert("⛔ ERRORE IMPREVISTO:\n" + error.message);
         }
         throw error;
     }
