@@ -4,7 +4,7 @@ import {
   Home, Archive, Save, X, CheckCircle2, MapPin, Users, Calendar, ChevronDown,
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
-  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter // Aggiunta Map per coerenza
+  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote // Aggiunta Map per coerenza
 } from 'lucide-react';
 
 // Mappatura icone
@@ -13,7 +13,7 @@ const Icons = {
   Home, Archive, Save, X, CheckCircle2, MapPin, Users, Calendar, ChevronDown,
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
-  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter
+  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote
 };
 
 const APP_TITLE = "SOMMELIER PRO";
@@ -21,51 +21,77 @@ const APP_TITLE = "SOMMELIER PRO";
 
 // --- GEMINI AI (STABLE V1 VERSION) ---
 // --- GEMINI AI 4.0 (AUTO-DISCOVERY & SELF-HEALING) ---
+// --- GEMINI AI: VERSIONE DEBUG DIRETTO ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
-    if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
+    if (!apiKey) {
+        alert("Manca la API Key! Inseriscila nelle impostazioni.");
+        throw new Error("Key mancante");
+    }
 
-    // Funzione interna per pulire la risposta JSON
-    const parseResponse = (data) => {
-        if (!data.candidates || !data.candidates[0]) throw new Error("L'AI non ha risposto.");
-        let text = data.candidates[0].content.parts[0].text;
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const firstBracket = text.indexOf('{');
-        const lastBracket = text.lastIndexOf('}');
-        const firstSquare = text.indexOf('[');
-        const lastSquare = text.lastIndexOf(']');
-        
-        let start = -1, end = -1;
-        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
-            start = firstBracket; end = lastBracket;
-        } else if (firstSquare !== -1) {
-            start = firstSquare; end = lastSquare;
-        }
-
-        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-        return JSON.parse(text);
-    };
-
-    // Funzione per eseguire la richiesta con un modello specifico
-    const performRequest = async (modelName) => {
-        // Pulisce il nome del modello se arriva come "models/gemini..."
-        const cleanName = modelName.replace("models/", "");
-        console.log("Provo con modello:", cleanName); // Debug nella console
-        
+    // Usiamo il modello più standard possibile
+    const MODEL_NAME = "gemini-1.5-flash"; 
+    
+    try {
         const parts = [{ text: prompt }];
         if (base64Image) {
+            // Pulizia aggressiva del base64
             const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
             parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
         }
 
-const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, ...            method: 'POST',
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`, {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: parts }] })
         });
-        
+
         const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-        return parseResponse(data);
-    };
+
+        // SE C'È UN ERRORE, LO MOSTRIAMO A SCHERMO
+        if (data.error) {
+            alert(`ERRORE GOOGLE:\nCodice: ${data.error.code}\nMessaggio: ${data.error.message}`);
+            throw new Error(data.error.message);
+        }
+
+        if (!data.candidates || !data.candidates[0]) {
+            alert("L'AI ha risposto ma senza testo. Riprova.");
+            throw new Error("Nessun candidato");
+        }
+
+        let text = data.candidates[0].content.parts[0].text;
+        
+        // Pulizia JSON
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const firstBracket = text.indexOf('{');
+        const lastBracket = text.lastIndexOf('}');
+        const firstSquare = text.indexOf('[');
+        const lastSquare = text.lastIndexOf(']'); // Fix per gli array
+
+        // Logica mista per trovare { } oppure [ ]
+        let start = -1, end = -1;
+        // Se c'è una graffa aperta, e (non c'è quadra OPPURE la graffa viene prima della quadra) -> è un oggetto
+        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
+            start = firstBracket; end = lastBracket;
+        } 
+        // Altrimenti se c'è una quadra -> è un array
+        else if (firstSquare !== -1) {
+            start = firstSquare; end = lastSquare;
+        }
+
+        if (start !== -1 && end !== -1) {
+            text = text.substring(start, end + 1);
+        }
+        
+        return JSON.parse(text);
+
+    } catch (error) {
+        // Se l'errore non è già stato mostrato dall'alert sopra
+        if (!error.message.includes("ERRORE GOOGLE")) {
+            alert("ERRORE GENERICO:\n" + error.message);
+        }
+        throw error;
+    }
+};
 
     // --- LOGICA PRINCIPALE ---
     try {
