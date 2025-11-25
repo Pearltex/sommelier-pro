@@ -4,110 +4,71 @@ import {
   Home, Archive, Save, X, CheckCircle2, MapPin, Users, Calendar, ChevronDown,
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
-  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote
+  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, Minus
 } from 'lucide-react';
 
-// Mappatura icone completa (evita errori di build)
 const Icons = {
   Wine, Beer, GlassWater, Utensils, Moon, Sun, Plus, Search, BarChart3,
   Home, Archive, Save, X, CheckCircle2, MapPin, Users, Calendar, ChevronDown,
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
-  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote
+  ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, Minus
 };
 
 const APP_TITLE = "SOMMELIER PRO";
 
-// --- API ESTERNE GRATUITE (NO KEY RICHIESTA) ---
-const apiService = {
-    // 1. CERCA CITTÀ (OpenStreetMap)
-    async getCityInfo(city) {
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&addressdetails=1&limit=1`, {
-                headers: { "User-Agent": "SommPro/1.0" }
-            });
-            const data = await res.json();
-            if (!data || data.length === 0) throw new Error("Città non trovata.");
-            
-            const addr = data[0].address;
-            const region = addr.state || addr.region || addr.county || "";
-            const country = addr.country || "";
-            return { r: region, c: country };
-        } catch (e) {
-            console.error(e);
-            return { r: "", c: "" }; // Fallback vuoto se fallisce
-        }
-    },
+// --- GEMINI AI (MOTORE 1.5 FLASH - RICHIEDE BILLING ATTIVO) ---
+const callGemini = async (apiKey, prompt, base64Image = null) => {
+    if (!apiKey) throw new Error("API Key mancante. Vai su Impostazioni.");
 
-    // 2. CERCA VINO/CIBO (OpenFoodFacts)
-    async searchProduct(query) {
-        try {
-            const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=1`);
-            const data = await res.json();
-            
-            if (!data.products || data.products.length === 0) throw new Error("Nessun risultato.");
-            const p = data.products[0];
-            
-            // Cerchiamo di indovinare il tipo dalle categorie
-            const cats = (p.categories || "").toLowerCase();
-            let type = "Altro";
-            if (cats.includes("red")) type = "Rosso";
-            else if (cats.includes("rosè")) type = "Rosato";
-            else if (cats.includes("white")) type = "Bianco";
-            else if (cats.includes("sparkling") || cats.includes("prosecco")) type = "Bollicine";
-            else if (cats.includes("beer")) type = "Birra";
-            else if (cats.includes("Alcolic")) type = "Superalcolici";
+    const MODEL = "gemini-1.5-flash"; 
 
-            return {
-                name: p.product_name || query,
-                brand: p.brands || "",
-                type: type,
-                img: p.image_url || null
-            };
-        } catch (e) {
-            throw new Error("Prodotto non trovato online.");
-        }
-    },
+    const parts = [{ text: prompt }];
+    if (base64Image) {
+        const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
+        parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
+    }
 
-    // 3. SOMMELIER LOGICO (Motore interno)
-    getPairing(foodName, prefs) {
-        const food = foodName.toLowerCase();
-        let suggestions = [];
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: parts }] })
+        });
 
-        // Logica rapida
-        if (food.includes("carne") || food.includes("bistecca") || food.includes("ragu") || food.includes("agnello")) {
-            suggestions.push({ name: "Chianti Classico", type: "Rosso", reason: "Tannino e acidità sgrassante." });
-            suggestions.push({ name: "Barolo", type: "Rosso", reason: "Struttura importante." });
-            suggestions.push({ name: "Montepulciano d'Abruzzo", type: "Rosso", reason: "Corpo e frutto." });
-        } else if (food.includes("pesce") || food.includes("mare") || food.includes("cozze") || food.includes("sushi")) {
-            suggestions.push({ name: "Vermentino", type: "Bianco", reason: "Sapidità marina." });
-            suggestions.push({ name: "Franciacorta", type: "Bollicine", reason: "Pulizia del palato." });
-            suggestions.push({ name: "Gewürztraminer", type: "Bianco", reason: "Aromaticità." });
-        } else if (food.includes("carbonara") || food.includes("uovo") || food.includes("formaggio")) {
-            suggestions.push({ name: "Chardonnay Barricato", type: "Bianco", reason: "Morbidezza avvolgente." });
-            suggestions.push({ name: "Frascati Superiore", type: "Bianco", reason: "Abbinamento locale." });
-            suggestions.push({ name: "Trento DOC", type: "Bollicine", reason: "Taglia il grasso dell'uovo." });
-        } else if (food.includes("pizza") || food.includes("fritto")) {
-            suggestions.push({ name: "Birra IPA", type: "Birra", reason: "Luppolo sgrassante." });
-            suggestions.push({ name: "Prosecco", type: "Bollicine", reason: "Fresco e leggero." });
-            suggestions.push({ name: "Gragnano", type: "Rosso", reason: "Frizzante rosso della tradizione." });
-        } else {
-            // Fallback
-            suggestions.push({ name: "Pinot Nero", type: "Rosso", reason: "Elegante e versatile." });
-            suggestions.push({ name: "Riesling", type: "Bianco", reason: "Fresco e minerale." });
-            suggestions.push({ name: "Champagne", type: "Bollicine", reason: "Perfetto sempre." });
+        const data = await response.json();
+
+        if (data.error) {
+            // Gestione errori "umana"
+            if (data.error.code === 403) throw new Error("Chiave non abilitata. Verifica su Google Cloud.");
+            if (data.error.message.includes("not found")) throw new Error("Modello AI non trovato.");
+            throw new Error(data.error.message);
         }
 
-        // Applica filtri utente
-        if (prefs.red > 0) suggestions = suggestions.filter(s => s.type === "Rosso");
-        else if (prefs.white > 0) suggestions = suggestions.filter(s => s.type === "Bianco");
-        else if (prefs.sparkling > 0) suggestions = suggestions.filter(s => s.type === "Bollicine");
-        else if (prefs.beer > 0) suggestions = suggestions.filter(s => s.type === "Birra");
+        if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta.");
 
-        // Se i filtri hanno tolto tutto, rimettiamo il fallback
-        if (suggestions.length === 0) suggestions.push({ name: "A tua scelta", type: "Misto", reason: "Nessun match specifico trovato." });
+        let text = data.candidates[0].content.parts[0].text;
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        
+        // Estrattore JSON robusto
+        const firstBracket = text.indexOf('{');
+        const lastBracket = text.lastIndexOf('}');
+        const firstSquare = text.indexOf('[');
+        const lastSquare = text.lastIndexOf(']');
+        
+        let start = -1, end = -1;
+        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
+            start = firstBracket; end = lastBracket;
+        } else if (firstSquare !== -1) {
+            start = firstSquare; end = lastSquare;
+        }
 
-        return suggestions.slice(0, 3);
+        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
+        
+        return JSON.parse(text);
+
+    } catch (error) { 
+        throw new Error(error.message); 
     }
 };
 
@@ -132,51 +93,54 @@ const getItemStyle = (type) => {
     const t = (type || "").toLowerCase();
     if (t.includes("rosso")) return "bg-red-50 border-red-100 text-red-900";
     if (t.includes("bianco")) return "bg-yellow-50 border-yellow-200 text-yellow-900";
-    if (t.includes("boll") || t.includes("spumante") || t.includes("champagne")) return "bg-amber-50 border-amber-200 text-amber-900";
-    if (t.includes("rosato") || t.includes("cerasuolo")) return "bg-pink-50 border-pink-200 text-pink-900";
+    if (t.includes("boll") || t.includes("spumante")) return "bg-amber-50 border-amber-200 text-amber-900";
+    if (t.includes("rosato")) return "bg-pink-50 border-pink-200 text-pink-900";
     if (t.includes("birra")) return "bg-orange-50 border-orange-200 text-orange-900";
     return "bg-white border-gray-100 text-slate-800";
 };
 
 // --- UI COMPONENTS ---
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, isLoading = false }) => {
-    const base = "w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed";
     const styles = {
         primary: "bg-slate-900 text-white shadow-slate-300",
         success: "bg-emerald-600 text-white shadow-emerald-200",
         danger: "bg-red-50 text-red-500 hover:bg-red-100 border border-red-200",
         ghost: "bg-transparent text-gray-500 hover:bg-gray-100 shadow-none",
-        ai: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-indigo-200"
+        ai: "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white shadow-purple-200"
     };
-    return ( <button onClick={onClick} disabled={isLoading} className={`${base} ${styles[variant]} ${className}`}> {isLoading ? <Icons.Loader2 size={18} className="animate-spin"/> : (Icon && <Icon size={18} />)} {children} </button> );
+    return ( 
+        <button onClick={onClick} disabled={isLoading} className={`w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed ${styles[variant]} ${className}`}> 
+            {isLoading ? <Icons.Loader2 size={18} className="animate-spin"/> : (Icon && <Icon size={18} />)} {children} 
+        </button> 
+    );
 };
 
 const Input = ({ label, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide">{label}</label>} <input className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 focus:bg-white transition-colors disabled:bg-gray-100 disabled:text-gray-500" {...props} /> </div> );
 const Select = ({ label, options, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide">{label}</label>} <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 bg-white" {...props}> <option value="">-- Seleziona --</option> {options.map(o => <option key={o} value={o}>{o}</option>)} </select> </div> );
 const Card = ({ children, className = '', onClick }) => ( <div onClick={onClick} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 ${className} ${onClick ? 'cursor-pointer active:bg-gray-50' : ''}`}>{children}</div> );
 
-// --- MAIN APP COMPONENT ---
+// --- MAIN APP ---
 function App() {
     const [tab, setTab] = useState('home');
     const [session, setSession] = useState(null); 
-    // Settings non servono più, ma lo teniamo per i backup
     const [showSettings, setShowSettings] = useState(false);
     
+    const [apiKey, setApiKey] = useState(() => { try { return localStorage.getItem('somm_apikey') || ""; } catch { return ""; } });
     const [logs, setLogs] = useState(() => { try { return JSON.parse(localStorage.getItem('somm_logs')) || []; } catch { return []; } });
     const [cellar, setCellar] = useState(() => { try { return JSON.parse(localStorage.getItem('somm_cellar')) || []; } catch { return []; } });
 
     useEffect(() => {
         localStorage.setItem('somm_logs', JSON.stringify(logs));
         localStorage.setItem('somm_cellar', JSON.stringify(cellar));
-    }, [logs, cellar]);
+        localStorage.setItem('somm_apikey', apiKey);
+    }, [logs, cellar, apiKey]);
 
     const startSession = (mode, initialItemData = null) => {
-        const initialStep = mode === 'Acquisto' ? 'adding' : 'context';
         setSession({ 
             id: Date.now(), mode, date: new Date().toISOString().split('T')[0], 
             locName: '', locCity: '', locRegion: '', locCountry: '', 
             friends: [], items: initialItemData ? [initialItemData] : [], 
-            step: initialItemData ? 'adding' : initialStep
+            step: initialItemData ? 'adding' : (mode === 'Acquisto' ? 'adding' : 'context')
         });
         setTab('session');
     };
@@ -200,7 +164,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "12.0" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "14.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -228,22 +192,23 @@ function App() {
             {showSettings && (
                 <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
                     <Card className="w-full max-w-sm animate-in zoom-in-95">
-                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg flex items-center gap-2"><Icons.Database size={18} className="text-indigo-500"/> Dati</h3><button onClick={() => setShowSettings(false)}><Icons.X size={20}/></button></div>
-                        <div className="space-y-2">
-                            <button onClick={exportBackup} className="w-full p-3 bg-gray-50 rounded-xl flex items-center gap-2 font-bold text-sm"><Icons.DownloadCloud size={16} /> Backup Dati</button>
-                            <label className="w-full p-3 bg-gray-50 rounded-xl flex items-center gap-2 font-bold text-sm cursor-pointer"><Icons.UploadCloud size={16} /> Ripristina Backup<input type="file" hidden accept=".json" onChange={importBackup} /></label>
+                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg flex items-center gap-2"><Icons.Sparkles size={18} className="text-indigo-500"/> AI Settings</h3><button onClick={() => setShowSettings(false)}><Icons.X size={20}/></button></div>
+                        <Input label="Gemini API Key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIzaSy..." />
+                        <Button onClick={() => setShowSettings(false)} variant="primary">Salva</Button>
+                        <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+                            <button onClick={exportBackup} className="w-full p-3 bg-gray-50 rounded-xl flex items-center gap-2 font-bold text-sm text-slate-600"><Icons.DownloadCloud size={16} /> Backup Dati</button>
+                            <label className="w-full p-3 bg-gray-50 rounded-xl flex items-center gap-2 font-bold text-sm text-slate-600 cursor-pointer"><Icons.UploadCloud size={16} /> Ripristina<input type="file" hidden accept=".json" onChange={importBackup} /></label>
                         </div>
-                        <p className="text-[10px] text-gray-400 mt-4 text-center">Versione No-AI (Server Free)</p>
                     </Card>
                 </div>
             )}
 
             <main className="p-4 max-w-md mx-auto">
                 {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} />}
-                {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} />}
+                {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
                 {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} />}
                 {tab === 'stats' && <StatsView logs={logs} cellar={cellar} />}
-                {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={() => { setSession(null); setTab('home'); }} />}
+                {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={() => { setSession(null); setTab('home'); }} apiKey={apiKey} />}
             </main>
 
             {(!session || tab !== 'session') && (
@@ -291,54 +256,74 @@ function HomeView({ startSession, logs, cellar }) {
     );
 }
 
-function SessionManager({ session, setSession, onSave, onCancel }) {
+function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [step, setStep] = useState(session.step);
     const [item, setItem] = useState(session.items[0] || {});
     const [tempGrape, setTempGrape] = useState("");
     const [tempPerc, setTempPerc] = useState("");
     const [tempFriend, setTempFriend] = useState("");
-    const [isApiLoading, setIsApiLoading] = useState(false);
-    const [pairingPrefs, setPairingPrefs] = useState({ red: 0, white: 0, rose: 0, sparkling: 0, beer: 0 });
+    const [isAiLoading, setIsAiLoading] = useState(false);
+    
+    // NUOVA LOGICA SOMMELIER
+    const [pairCounts, setPairCounts] = useState({ Rosso: 0, Bianco: 0, Bollicine: 0, Birra: 0, Dolce: 0 });
     const [pairingSuggestions, setPairingSuggestions] = useState([]);
+    
     const fileInputFood = useRef(null);
     const fileInputWine = useRef(null);
 
-    // --- 1. GEO OPENSTREETMAP ---
     const handleGeoFill = async () => {
         if (!session.locCity) return alert("Scrivi prima una città!");
-        setIsApiLoading(true);
+        setIsAiLoading(true);
         try {
-            const data = await apiService.getCityInfo(session.locCity);
+            const prompt = `Dato la città "${session.locCity}", restituisci JSON: {"r": "Regione", "c": "Stato"}`;
+            const data = await callGemini(apiKey, prompt);
             setSession(prev => ({ ...prev, locRegion: data.r, locCountry: data.c }));
-        } catch (e) { alert(e.message); } finally { setIsApiLoading(false); }
+        } catch (e) { alert(e.message); } finally { setIsAiLoading(false); }
     };
 
-    // --- 2. RICERCA ONLINE (OpenFoodFacts) ---
-    const handleWineSearch = async () => {
-        if (!item.wine) return alert("Scrivi il nome per cercare online!");
-        setIsApiLoading(true);
+    const handleWineFill = async () => {
+        if (!item.wine && !item.imgWine) return alert("Nome o Foto necessari!");
+        setIsAiLoading(true);
         try {
-            const data = await apiService.searchProduct(item.wine);
-            setItem(prev => ({ 
-                ...prev, 
-                wine: data.name, 
-                prod: data.brand, 
-                type: data.type,
-                imgWine: data.img || prev.imgWine 
-            }));
-            alert("Trovato online! 🌍");
-        } catch (e) {
-            alert("Nessun risultato online. Inserisci a mano.");
-        } finally {
-            setIsApiLoading(false);
-        }
+            const prompt = `
+                Analizza il vino "${item.wine || ''}". STIMA i dati se mancano.
+                Restituisci JSON: {
+                    "wine": "Nome Corretto", "prod": "Produttore", "year": "Anno",
+                    "type": "Rosso/Bianco/Bollicine/ecc", "method": "Metodo",
+                    "alcohol": 13.5, "price": 20,
+                    "grapes": [{"name": "Uva", "perc": 100}]
+                }
+            `;
+            const data = await callGemini(apiKey, prompt, item.imgWine);
+            setItem(prev => ({ ...prev, ...data }));
+        } catch (e) { alert(e.message); } finally { setIsAiLoading(false); }
     };
 
-    // --- 3. SOMMELIER LOGICO ---
-    const handleFoodPairing = () => {
-        if (!item.food) return alert("Inserisci un piatto!");
-        const suggestions = apiService.getPairing(item.food, pairingPrefs);
-        setPairingSuggestions(suggestions);
+    const handleFoodPairing = async () => {
+        if (!item.food && !item.imgFood) return alert("Inserisci un piatto!");
+        
+        // Costruiamo la richiesta basata sui contatori
+        let reqs = [];
+        Object.entries(pairCounts).forEach(([type, count]) => {
+            if(count > 0) reqs.push(`${count} vino/i di tipo ${type}`);
+        });
+        const reqString = reqs.length > 0 ? "Voglio esattamente: " + reqs.join(", ") : "Consigliami tu il meglio.";
+
+        setIsAiLoading(true);
+        try {
+            const prompt = `
+                Piatto: "${item.food}". 
+                Richiesta utente: ${reqString}.
+                Dammi consigli precisi.
+                Restituisci JSON Array: [{"name": "Vino", "type": "Rosso/Bianco", "reason": "Motivo"}]
+            `;
+            const data = await callGemini(apiKey, prompt, item.imgFood);
+            setPairingSuggestions(Array.isArray(data) ? data : (data.suggestions || []));
+        } catch (e) { alert(e.message); } finally { setIsAiLoading(false); }
+    };
+
+    const updateCount = (type, delta) => {
+        setPairCounts(prev => ({ ...prev, [type]: Math.max(0, prev[type] + delta) }));
     };
 
     const currentGrapeTotal = (item.grapes || []).reduce((acc, g) => acc + parseInt(g.perc || 0), 0);
@@ -353,7 +338,17 @@ function SessionManager({ session, setSession, onSave, onCancel }) {
         if(session.mode === 'Acquisto') onSave({ ...session, items: [item] });
         else { setSession(prev => ({ ...prev, items: [...prev.items, item] })); setItem({}); setStep('context'); }
     };
-    const prefButton = (type, label) => (<button onClick={() => setPairingPrefs(p => ({...p, [type]: (p[type] || 0) + 1}))} className={`flex-1 p-2 rounded-lg text-xs font-bold border ${pairingPrefs[type] > 0 ? 'bg-slate-800 text-white' : 'bg-white text-gray-500'}`}>{label} {pairingPrefs[type] > 0 && <span className="ml-1 bg-white text-black px-1 rounded-full">{pairingPrefs[type]}</span>}</button>);
+    
+    const CounterBtn = ({ type, label }) => (
+        <div className="flex flex-col items-center bg-gray-50 p-2 rounded-xl border border-gray-100 min-w-[70px]">
+            <span className="text-[10px] font-bold uppercase text-gray-400 mb-1">{label}</span>
+            <div className="flex items-center gap-2">
+                <button onClick={() => updateCount(type, -1)} className="w-6 h-6 bg-white rounded-full shadow-sm flex items-center justify-center text-slate-600 active:scale-90"><Icons.Minus size={12}/></button>
+                <span className={`font-black ${pairCounts[type] > 0 ? 'text-indigo-600' : 'text-slate-300'}`}>{pairCounts[type]}</span>
+                <button onClick={() => updateCount(type, 1)} className="w-6 h-6 bg-white rounded-full shadow-sm flex items-center justify-center text-slate-600 active:scale-90"><Icons.Plus size={12}/></button>
+            </div>
+        </div>
+    );
 
     if (step === 'context') return (
         <div className="space-y-4 animate-in slide-in-from-bottom-4 fade-in">
@@ -361,7 +356,7 @@ function SessionManager({ session, setSession, onSave, onCancel }) {
                 <div className="flex items-center gap-2 mb-4 text-slate-900 font-bold"><Icons.MapPin className="text-red-500" size={20} /> <h3>Dettagli Evento</h3></div>
                 <Input label="Data" type="date" value={session.date} onChange={e => setSession({...session, date: e.target.value})} />
                 <Input label="Location" placeholder="Ristorante..." value={session.locName} onChange={e => setSession({...session, locName: e.target.value})} />
-                <div className="flex gap-2 items-end mb-3"><div className="flex-1"><Input label="Città" placeholder="Es. Roma" value={session.locCity} onChange={e => setSession({...session, locCity: e.target.value})} /></div><button onClick={handleGeoFill} disabled={isApiLoading || !session.locCity} className="mb-3 p-3 bg-blue-100 text-blue-600 rounded-xl shadow-sm hover:bg-blue-200 disabled:opacity-50">{isApiLoading ? <Icons.Loader2 className="animate-spin"/> : <Icons.MapPin />}</button></div>
+                <div className="flex gap-2 items-end mb-3"><div className="flex-1"><Input label="Città" placeholder="Es. Tokyo" value={session.locCity} onChange={e => setSession({...session, locCity: e.target.value})} /></div><button onClick={handleGeoFill} disabled={isAiLoading || !session.locCity} className="mb-3 p-3 bg-indigo-100 text-indigo-600 rounded-xl shadow-sm hover:bg-indigo-200 disabled:opacity-50">{isAiLoading ? <Icons.Loader2 className="animate-spin"/> : <Icons.MapPin />}</button></div>
                 <div className="flex gap-2"><div className="flex-1"><Input label="Regione" value={session.locRegion || ''} disabled /></div><div className="flex-1"><Input label="Stato" value={session.locCountry || ''} disabled /></div></div>
             </Card>
             <Card>
@@ -379,20 +374,48 @@ function SessionManager({ session, setSession, onSave, onCancel }) {
     if (step === 'adding') return (
         <div className="space-y-4 animate-in slide-in-from-right-8 fade-in pb-20">
             <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-lg">{session.mode === 'Acquisto' ? 'Nuova Bottiglia' : 'Nuovo Inserimento'}</h3><button onClick={onCancel}><Icons.X size={20} className="text-gray-400"/></button></div>
+            
+            {/* SEZIONE CIBO E SOMMELIER */}
             {session.mode !== 'Degustazione' && session.mode !== 'Acquisto' && (
                 <Card className="bg-orange-50/50 border-orange-100">
                     <div className="flex gap-2 items-end mb-2"><div className="flex-1"><Input label="Piatto" placeholder="Es. Carbonara" value={item.food || ''} onChange={e => setItem({...item, food: e.target.value})} /></div><div className="mb-3"><input type="file" ref={fileInputFood} hidden accept="image/*" onChange={(e) => handlePhoto(e, 'imgFood')} /><button onClick={() => fileInputFood.current.click()} className="p-3 rounded-xl border bg-white text-gray-400"><Icons.Camera size={24}/></button></div></div>
                     {item.imgFood && <div className="h-24 w-full bg-cover bg-center rounded-lg mt-2 mb-3" style={{backgroundImage: `url(${item.imgFood})`}}></div>}
+                    
                     <div className="bg-white p-3 rounded-xl border border-orange-100">
-                        <label className="text-[10px] font-bold text-orange-400 uppercase mb-2 block">Cosa vorresti bere?</label>
-                        <div className="flex gap-1 mb-3 overflow-x-auto pb-1">{prefButton('red', 'Rosso')}{prefButton('white', 'Bianco')}{prefButton('sparkling', 'Bolle')}{prefButton('beer', 'Birra')}</div>
-                        <div className="flex gap-2"><button onClick={() => setPairingPrefs({ red: 0, white: 0, rose: 0, sparkling: 0, beer: 0 })} className="px-3 py-2 text-xs text-gray-400 font-bold underline">Reset</button><Button onClick={handleFoodPairing} variant="ai" icon={Icons.Sparkles}>Suggerisci</Button></div>
-                        {pairingSuggestions.length > 0 && (<div className="mt-3 space-y-2 animate-in slide-in-from-top-2">{pairingSuggestions.map((s, i) => (<div key={i} onClick={() => setItem(prev => ({...prev, wine: s.name, type: s.type}))} className="p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100"><div className="flex justify-between items-start"><span className="font-bold text-slate-800">{s.name}</span><span className="text-[10px] uppercase font-bold bg-white px-2 py-0.5 rounded text-orange-600 border border-orange-200">{s.type}</span></div><p className="text-xs text-slate-600 mt-1 leading-tight">{s.reason}</p></div>))}</div>)}
+                        <label className="text-[10px] font-bold text-orange-400 uppercase mb-3 block text-center">Sommelier: Configura Ordine</label>
+                        
+                        {/* CONTATORI FLEX */}
+                        <div className="flex gap-2 overflow-x-auto pb-2 mb-3 justify-center">
+                            <CounterBtn type="Rosso" label="Rossi" />
+                            <CounterBtn type="Bianco" label="Bianchi" />
+                            <CounterBtn type="Bollicine" label="Bolle" />
+                            <CounterBtn type="Birra" label="Birre" />
+                        </div>
+
+                        <Button onClick={handleFoodPairing} variant="ai" isLoading={isAiLoading} icon={Icons.Sparkles}>
+                            {pairingSuggestions.length > 0 ? "Ricalcola Abbinamento" : "Chiedi al Sommelier"}
+                        </Button>
+
+                        {pairingSuggestions.length > 0 && (
+                            <div className="mt-3 space-y-2 animate-in slide-in-from-top-2">
+                                {pairingSuggestions.map((s, i) => (
+                                    <div key={i} onClick={() => setItem(prev => ({...prev, wine: s.name, type: s.type}))} className="p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors">
+                                        <div className="flex justify-between items-start">
+                                            <span className="font-bold text-slate-800">{s.name}</span>
+                                            <span className="text-[10px] uppercase font-bold bg-white px-2 py-0.5 rounded text-orange-600 border border-orange-200">{s.type}</span>
+                                        </div>
+                                        <p className="text-xs text-slate-600 mt-1 leading-tight">{s.reason}</p>
+                                    </div>
+                                ))}
+                                <p className="text-[10px] text-center text-gray-400 mt-1">Clicca su un vino per copiarlo</p>
+                            </div>
+                        )}
                     </div>
                 </Card>
             )}
+
             <Card className="border-l-4 border-l-indigo-500">
-                <div className="flex gap-2 items-end"><div className="flex-1"><Input label="Etichetta / Nome" value={item.wine || ''} onChange={e => setItem({...item, wine: e.target.value})} /></div><button onClick={handleWineSearch} disabled={isApiLoading} className="mb-3 p-3 bg-gradient-to-r from-indigo-500 to-blue-500 text-white rounded-xl shadow-lg shadow-blue-200 disabled:opacity-50">{isApiLoading ? <Icons.Loader2 size={20} className="animate-spin"/> : <Icons.Search size={20}/>}</button><div className="mb-3"><input type="file" ref={fileInputWine} hidden accept="image/*" onChange={(e) => handlePhoto(e, 'imgWine')} /><button onClick={() => fileInputWine.current.click()} className="p-3 rounded-xl border bg-gray-50 text-gray-400"><Icons.Camera size={24}/></button></div></div>
+                <div className="flex gap-2 items-end"><div className="flex-1"><Input label="Etichetta / Nome" value={item.wine || ''} onChange={e => setItem({...item, wine: e.target.value})} /></div><button onClick={handleWineFill} disabled={isAiLoading} className="mb-3 p-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl shadow-lg shadow-purple-200 disabled:opacity-50">{isAiLoading ? <Icons.Loader2 size={20} className="animate-spin"/> : <Icons.Sparkles size={20}/>}</button><div className="mb-3"><input type="file" ref={fileInputWine} hidden accept="image/*" onChange={(e) => handlePhoto(e, 'imgWine')} /><button onClick={() => fileInputWine.current.click()} className="p-3 rounded-xl border bg-gray-50 text-gray-400"><Icons.Camera size={24}/></button></div></div>
                 {item.imgWine && <div className="h-40 w-full bg-contain bg-no-repeat bg-center rounded-lg mt-2 mb-4 bg-gray-100" style={{backgroundImage: `url(${item.imgWine})`}}></div>}
                 <div className="flex gap-2"><Input label="Produttore" value={item.prod || ''} onChange={e => setItem({...item, prod: e.target.value})} /><div className="w-24"><Input label="Anno" type="number" value={item.year || ''} onChange={e => setItem({...item, year: e.target.value})} /></div></div>
                 <div className="flex gap-2"><Input label="Tipologia" placeholder="Rosso..." value={item.type || ''} onChange={e => setItem({...item, type: e.target.value})} /><Input label="Metodo" placeholder="Classico..." value={item.method || ''} onChange={e => setItem({...item, method: e.target.value})} /></div>
@@ -414,7 +437,7 @@ function SessionManager({ session, setSession, onSave, onCancel }) {
     );
 }
 
-function CellarView({ cellar, setCellar, startSession }) {
+function CellarView({ cellar, setCellar, apiKey, startSession }) {
     const [addMode, setAddMode] = useState(false);
     const [filter, setFilter] = useState('all');
     const [newBot, setNewBot] = useState({});
@@ -430,14 +453,7 @@ function CellarView({ cellar, setCellar, startSession }) {
     });
 
     const handleAdd = () => { setCellar([...cellar, { ...newBot, id: Date.now() }]); setAddMode(false); setNewBot({}); };
-    const handleSearch = async () => {
-         if(!newBot.n) return; setLoading(true);
-         try {
-             const data = await apiService.searchProduct(newBot.n);
-             setNewBot(prev => ({...prev, n: data.name, p: data.brand, type: data.type }));
-             alert("Dati trovati online! 🌍");
-         } catch(e) { alert(e.message); } finally { setLoading(false); }
-    };
+    const handleSmartFill = async () => { if(!newBot.n) return; setLoading(true); try { const prompt = `Analizza vino: "${newBot.n}". JSON STRETTO: {"prod": "Produttore", "year": "Anno", "type": "Rosso/Bianco/Bollicine/Rosato"}`; const data = await callGemini(apiKey, prompt); setNewBot(prev => ({ ...prev, p: data.prod, y: data.year, type: data.type })); } catch(e) { alert("Errore AI: " + e.message); } finally { setLoading(false); } };
     const openBottle = (b) => { if(confirm("Stappi questa bottiglia?")) { if (b.q > 1) setCellar(cellar.map(item => item.id === b.id ? { ...item, q: item.q - 1 } : item)); else setCellar(cellar.filter(item => item.id !== b.id)); startSession('Degustazione', { wine: b.n, prod: b.p, year: b.y, type: b.type, price: b.pr, buyPlace: b.buyPlace }); } };
     const FilterBtn = ({ id, label }) => (<button onClick={() => setFilter(id)} className={`px-4 py-2 rounded-full text-xs font-bold transition-all border ${filter === id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-gray-500 border-gray-200'}`}>{label}</button>);
 
@@ -445,7 +461,7 @@ function CellarView({ cellar, setCellar, startSession }) {
         <div className="space-y-4 pb-20">
             <div className="flex justify-between items-center"><h2 className="font-bold text-xl">La Tua Cantina</h2><button onClick={() => setAddMode(!addMode)} className="bg-slate-900 text-white p-2 rounded-full shadow-lg shadow-slate-200"><Icons.Plus size={20}/></button></div>
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar"><FilterBtn id="all" label="Tutti" /><FilterBtn id="rossi" label="Rossi" /><FilterBtn id="bianchi" label="Bianchi" /><FilterBtn id="bolle" label="Bollicine" /></div>
-            {addMode && ( <Card className="animate-in slide-in-from-top-4 border-2 border-slate-900"><div className="flex gap-2 items-end"><div className="flex-1"><Input label="Vino" value={newBot.n || ''} onChange={e => setNewBot({...newBot, n: e.target.value})} /></div><button onClick={handleSearch} disabled={loading} className="mb-3 p-3 bg-blue-100 text-blue-600 rounded-xl"><Icons.Search size={20}/></button></div><div className="flex gap-2"><Input label="Produttore" value={newBot.p || ''} onChange={e => setNewBot({...newBot, p: e.target.value})} /><div className="w-24"><Input label="Anno" type="number" value={newBot.y || ''} onChange={e => setNewBot({...newBot, y: e.target.value})} /></div></div><div className="flex gap-2"><div className="flex-1"><Input label="Tipologia" placeholder="Rosso..." value={newBot.type || ''} onChange={e => setNewBot({...newBot, type: e.target.value})} /></div><div className="w-24"><Input label="Qtà" type="number" value={newBot.q || 1} onChange={e => setNewBot({...newBot, q: parseInt(e.target.value)})} /></div></div><Input label="Dove l'hai preso?" value={newBot.buyPlace || ''} onChange={e => setNewBot({...newBot, buyPlace: e.target.value})} /><Button onClick={handleAdd} variant="success">Aggiungi alla Collezione</Button></Card> )}
+            {addMode && ( <Card className="animate-in slide-in-from-top-4 border-2 border-slate-900"><div className="flex gap-2 items-end"><div className="flex-1"><Input label="Vino" value={newBot.n || ''} onChange={e => setNewBot({...newBot, n: e.target.value})} /></div><button onClick={handleSmartFill} disabled={loading} className="mb-3 p-3 bg-indigo-100 text-indigo-600 rounded-xl"><Icons.Sparkles size={20}/></button></div><div className="flex gap-2"><Input label="Produttore" value={newBot.p || ''} onChange={e => setNewBot({...newBot, p: e.target.value})} /><div className="w-24"><Input label="Anno" type="number" value={newBot.y || ''} onChange={e => setNewBot({...newBot, y: e.target.value})} /></div></div><div className="flex gap-2"><div className="flex-1"><Input label="Tipologia" placeholder="Rosso..." value={newBot.type || ''} onChange={e => setNewBot({...newBot, type: e.target.value})} /></div><div className="w-24"><Input label="Qtà" type="number" value={newBot.q || 1} onChange={e => setNewBot({...newBot, q: parseInt(e.target.value)})} /></div></div><Input label="Dove l'hai preso?" value={newBot.buyPlace || ''} onChange={e => setNewBot({...newBot, buyPlace: e.target.value})} /><Button onClick={handleAdd} variant="success">Aggiungi alla Collezione</Button></Card> )}
             <div className="space-y-3">{filteredCellar.length === 0 ? <p className="text-center text-gray-400 text-sm py-10">Nessuna bottiglia trovata.</p> : filteredCellar.map(b => ( <div key={b.id} className={`p-4 rounded-xl border shadow-sm flex justify-between items-center transition-colors ${getItemStyle(b.type)}`}><div><div className="font-bold text-lg leading-tight">{b.n}</div><div className="text-xs opacity-80 font-medium mt-1">{b.p} • {b.y}</div>{b.buyPlace && <div className="text-[10px] opacity-60 mt-1 flex items-center gap-1"><Icons.Store size={10}/> {b.buyPlace}</div>}</div><div className="flex items-center gap-3 pl-2"><span className="bg-white/50 backdrop-blur-sm px-3 py-1 rounded-lg text-sm font-black shadow-sm">x{b.q}</span><button onClick={() => openBottle(b)} className="bg-white text-slate-900 p-2 rounded-full shadow-sm active:scale-95"><Icons.Wine size={18}/></button></div></div> ))}</div>
         </div>
     );
