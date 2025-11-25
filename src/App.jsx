@@ -18,67 +18,86 @@ const Icons = {
 
 const APP_TITLE = "SOMMELIER PRO";
 
-// --- GEMINI AI (CORRECT ENDPOINT v1beta) ---
+// --- GEMINI AI (AUTO-DISCOVERY PER ACCOUNT BILLING) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
-    if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
+    if (!apiKey) throw new Error("API Key mancante.");
 
-    // Modello Flash: Veloce, Economico, Richiede v1beta
-    const MODEL = "gemini-1.5-flash"; 
+    // Funzione interna per fare la chiamata vera e propria
+    const performRequest = async (modelName) => {
+        // Pulisce il nome (toglie "models/" se c'è)
+        const cleanName = modelName.replace("models/", "");
+        
+        const parts = [{ text: prompt }];
+        if (base64Image) {
+            const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
+            parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
+        }
 
-    const parts = [{ text: prompt }];
-    if (base64Image) {
-        const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
-        parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
-    }
-
-    try {
-        // URL Corretto: v1beta (non v1)
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${cleanName}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: parts }] })
         });
 
         const data = await response.json();
-
+        
         if (data.error) {
-            console.error("Gemini Error:", data.error);
-            
-            if (data.error.code === 403) {
-                throw new Error("Chiave API non valida o API non abilitata su questo progetto.");
+            // Se errore 404, lanciamo un errore specifico per attivare la ricerca
+            if (data.error.code === 404 || data.error.message.includes("not found")) {
+                throw new Error("MODEL_NOT_FOUND");
             }
-            if (data.error.message.includes("not found")) {
-                throw new Error("Modello non trovato. Verifica che la chiave sia del progetto con Billing attivo.");
-            }
-            
             throw new Error(data.error.message);
         }
+        
+        return data;
+    };
 
-        if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta dall'AI.");
-
+    // Funzione per pulire il JSON
+    const parseData = (data) => {
+        if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta.");
         let text = data.candidates[0].content.parts[0].text;
-        
-        // Pulizia JSON chirurgica
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const firstBracket = text.indexOf('{');
-        const lastBracket = text.lastIndexOf('}');
-        const firstSquare = text.indexOf('[');
-        const lastSquare = text.lastIndexOf(']');
-        
+        const s = text.indexOf('{'); const e = text.lastIndexOf('}');
+        const sa = text.indexOf('['); const ea = text.lastIndexOf(']');
         let start = -1, end = -1;
-        // Logica per rilevare se è Oggetto {} o Array []
-        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
-            start = firstBracket; end = lastBracket;
-        } else if (firstSquare !== -1) {
-            start = firstSquare; end = lastSquare;
-        }
-
+        if (s !== -1 && (sa === -1 || s < sa)) { start = s; end = e; } else if (sa !== -1) { start = sa; end = ea; }
         if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-        
         return JSON.parse(text);
+    };
 
-    } catch (error) { 
-        throw new Error(`AI Error: ${error.message}`); 
+    // --- FLUSSO PRINCIPALE ---
+    try {
+        // 1. Proviamo il modello Flash (che è il migliore)
+        const result = await performRequest("gemini-1.5-flash");
+        return parseData(result);
+
+    } catch (e) {
+        // Se Flash non si trova, CERCHIAMO cosa c'è disponibile
+        if (e.message === "MODEL_NOT_FOUND") {
+            try {
+                // Chiediamo la lista dei modelli disponibili per questa chiave
+                const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                const listData = await listRes.json();
+
+                if (listData.models) {
+                    // Troviamo il primo modello Gemini disponibile
+                    const validModel = listData.models.find(m => 
+                        m.name.includes("gemini") && 
+                        m.supportedGenerationMethods.includes("generateContent")
+                    );
+
+                    if (validModel) {
+                        // TENTATIVO 2: Usiamo quello che Google ci ha suggerito
+                        const result2 = await performRequest(validModel.name);
+                        return parseData(result2);
+                    }
+                }
+            } catch (scanError) {
+                console.error("Scansione fallita", scanError);
+            }
+        }
+        // Se siamo qui, è un errore diverso (es. Key non valida) o non abbiamo trovato nulla
+        throw new Error(`AI Error: ${e.message}`);
     }
 };
 
