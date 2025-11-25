@@ -7,7 +7,7 @@ import {
   ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote
 } from 'lucide-react';
 
-// Mappatura icone completa
+// Mappatura icone
 const Icons = {
   Wine, Beer, GlassWater, Utensils, Moon, Sun, Plus, Search, BarChart3,
   Home, Archive, Save, X, CheckCircle2, MapPin, Users, Calendar, ChevronDown,
@@ -18,21 +18,12 @@ const Icons = {
 
 const APP_TITLE = "SOMMELIER PRO";
 
-// --- GEMINI AI 4.0 (AUTO-DISCOVERY & SELF-HEALING) ---
-// --- GEMINI AI: VERSIONE SPIA (DIAGNOSTICA) ---
-// --- GEMINI AI: VERSIONE MULTI-PASS (ANTI-404) ---
-// --- GEMINI AI: VERSIONE INVESTIGATIVA (ULTIMA SPIAGGIA) ---
-// --- GEMINI AI: VERSIONE STABILE (SAFE MODE) ---
+// --- GEMINI AI (VERSIONE PREMIUM SBLOCCATA) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
 
-    // Lista di modelli SICURI (Niente sperimentali che richiedono abbonamenti)
-    const SAFE_MODELS = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-pro",
-        "gemini-pro" // La versione 1.0 legacy, funziona sempre
-    ];
+    // Ora che hai il billing attivo, usiamo i modelli in ordine di potenza
+    const MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
 
     const parts = [{ text: prompt }];
     if (base64Image) {
@@ -42,11 +33,9 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
 
     let lastError = null;
 
-    // Proviamo i modelli uno per uno
-    for (const model of SAFE_MODELS) {
+    // Tentativi a cascata
+    for (const model of MODELS) {
         try {
-            console.log(`Provo modello sicuro: ${model}`); 
-            
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -55,14 +44,10 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
 
             const data = await response.json();
 
-            // Gestione errori specifici
             if (data.error) {
-                // Se quota superata o modello non trovato, passiamo al prossimo
-                if (data.error.code === 404 || data.error.code === 429 || data.error.message.includes("quota")) {
-                    lastError = `${model}: ${data.error.message}`;
-                    continue; 
-                }
-                throw new Error(data.error.message);
+                // Se errore, prova il prossimo modello
+                lastError = data.error.message;
+                continue;
             }
 
             if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta.");
@@ -92,11 +77,8 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
             continue;
         }
     }
-
-    // Se arriviamo qui, tutti i modelli hanno fallito.
-    // Molto probabile che l'account Google abbia finito i crediti gratuiti o serva un nuovo account.
-    alert(`AI Fallita.\nUltimo errore: ${lastError}\n\nCONSIGLIO: Crea un nuovo account Google e genera una nuova API Key.`);
-    throw new Error("Tutti i modelli falliti.");
+    
+    throw new Error(`AI irraggiungibile: ${lastError}. Verifica di aver creato la Key nel progetto con fatturazione.`);
 };
 
 // --- UTILITY ---
@@ -189,7 +171,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "8.1" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "10.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -265,7 +247,6 @@ function HomeView({ startSession, logs, cellar, onExp, onImp }) {
                     </div>
                 </div>
             </div>
-            
             <div className="grid grid-cols-2 gap-3">
                 {[{ l: "Degustazione", i: Icons.Wine, c: "bg-pink-50 text-pink-900" }, { l: "Pranzo", i: Icons.Utensils, c: "bg-emerald-50 text-emerald-900" }, { l: "Aperitivo", i: Icons.Sun, c: "bg-orange-50 text-orange-900" }, { l: "Cena", i: Icons.Moon, c: "bg-indigo-50 text-indigo-900" }].map(m => (
                     <button key={m.l} onClick={() => startSession(m.l)} className={`${m.c} p-5 rounded-2xl flex flex-col items-center gap-2 font-bold transition-transform active:scale-95 border border-transparent hover:border-current shadow-sm`}><m.i size={28} /> <span>{m.l}</span></button>
@@ -274,7 +255,6 @@ function HomeView({ startSession, logs, cellar, onExp, onImp }) {
                     <Icons.ShoppingBag size={24} /> <span>Acquisto / Cantina Rapida</span>
                 </button>
             </div>
-
             <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1"><Icons.Database size={12}/> Gestione Dati</h3>
                 <div className="grid grid-cols-2 gap-3">
