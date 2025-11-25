@@ -18,23 +18,22 @@ const Icons = {
 
 const APP_TITLE = "SOMMELIER PRO";
 
-// --- GEMINI AI (EUROPE STABLE VERSION) ---
+// --- GEMINI AI (CORRECT ENDPOINT v1beta) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
 
-    // In Europa usiamo SOLO questo modello, è il più sicuro e veloce.
+    // Modello Flash: Veloce, Economico, Richiede v1beta
     const MODEL = "gemini-1.5-flash"; 
 
     const parts = [{ text: prompt }];
     if (base64Image) {
-        // Pulizia base64
         const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
         parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
     }
 
     try {
-        // NOTA: Ho cambiato l'URL da 'v1beta' a 'v1' per massima stabilità
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${apiKey}`, {
+        // URL Corretto: v1beta (non v1)
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: parts }] })
@@ -44,10 +43,14 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
 
         if (data.error) {
             console.error("Gemini Error:", data.error);
-            // Se l'errore è 403 o 404, significa che l'API non è abilitata nella console
-            if (data.error.code === 403 || data.error.message.includes("Not Found")) {
-                throw new Error("L'API non è attiva. Vai su Google Cloud Console e abilita 'Generative Language API'.");
+            
+            if (data.error.code === 403) {
+                throw new Error("Chiave API non valida o API non abilitata su questo progetto.");
             }
+            if (data.error.message.includes("not found")) {
+                throw new Error("Modello non trovato. Verifica che la chiave sia del progetto con Billing attivo.");
+            }
+            
             throw new Error(data.error.message);
         }
 
@@ -55,7 +58,7 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
 
         let text = data.candidates[0].content.parts[0].text;
         
-        // Pulizia JSON
+        // Pulizia JSON chirurgica
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
         const firstBracket = text.indexOf('{');
         const lastBracket = text.lastIndexOf('}');
@@ -63,6 +66,7 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
         const lastSquare = text.lastIndexOf(']');
         
         let start = -1, end = -1;
+        // Logica per rilevare se è Oggetto {} o Array []
         if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
             start = firstBracket; end = lastBracket;
         } else if (firstSquare !== -1) {
@@ -74,7 +78,6 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
         return JSON.parse(text);
 
     } catch (error) { 
-        // Mostriamo l'errore reale all'utente
         throw new Error(`AI Error: ${error.message}`); 
     }
 };
@@ -169,7 +172,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "10.0" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "11.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
