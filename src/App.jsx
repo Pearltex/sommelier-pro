@@ -18,67 +18,65 @@ const Icons = {
 
 const APP_TITLE = "SOMMELIER PRO";
 
-// --- GEMINI AI (VERSIONE PREMIUM SBLOCCATA) ---
+// --- GEMINI AI (EUROPE STABLE VERSION) ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante. Impostala (⚙️).");
 
-    // Ora che hai il billing attivo, usiamo i modelli in ordine di potenza
-    const MODELS = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
+    // In Europa usiamo SOLO questo modello, è il più sicuro e veloce.
+    const MODEL = "gemini-1.5-flash"; 
 
     const parts = [{ text: prompt }];
     if (base64Image) {
+        // Pulizia base64
         const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
         parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
     }
 
-    let lastError = null;
+    try {
+        // NOTA: Ho cambiato l'URL da 'v1beta' a 'v1' per massima stabilità
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: parts }] })
+        });
 
-    // Tentativi a cascata
-    for (const model of MODELS) {
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ contents: [{ parts: parts }] })
-            });
+        const data = await response.json();
 
-            const data = await response.json();
-
-            if (data.error) {
-                // Se errore, prova il prossimo modello
-                lastError = data.error.message;
-                continue;
+        if (data.error) {
+            console.error("Gemini Error:", data.error);
+            // Se l'errore è 403 o 404, significa che l'API non è abilitata nella console
+            if (data.error.code === 403 || data.error.message.includes("Not Found")) {
+                throw new Error("L'API non è attiva. Vai su Google Cloud Console e abilita 'Generative Language API'.");
             }
-
-            if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta.");
-
-            let text = data.candidates[0].content.parts[0].text;
-            
-            // Pulizia JSON
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const firstBracket = text.indexOf('{');
-            const lastBracket = text.lastIndexOf('}');
-            const firstSquare = text.indexOf('[');
-            const lastSquare = text.lastIndexOf(']');
-            
-            let start = -1, end = -1;
-            if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
-                start = firstBracket; end = lastBracket;
-            } else if (firstSquare !== -1) {
-                start = firstSquare; end = lastSquare;
-            }
-
-            if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-            
-            return JSON.parse(text);
-
-        } catch (e) {
-            lastError = e.message;
-            continue;
+            throw new Error(data.error.message);
         }
+
+        if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta dall'AI.");
+
+        let text = data.candidates[0].content.parts[0].text;
+        
+        // Pulizia JSON
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const firstBracket = text.indexOf('{');
+        const lastBracket = text.lastIndexOf('}');
+        const firstSquare = text.indexOf('[');
+        const lastSquare = text.lastIndexOf(']');
+        
+        let start = -1, end = -1;
+        if (firstBracket !== -1 && (firstSquare === -1 || firstBracket < firstSquare)) {
+            start = firstBracket; end = lastBracket;
+        } else if (firstSquare !== -1) {
+            start = firstSquare; end = lastSquare;
+        }
+
+        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
+        
+        return JSON.parse(text);
+
+    } catch (error) { 
+        // Mostriamo l'errore reale all'utente
+        throw new Error(`AI Error: ${error.message}`); 
     }
-    
-    throw new Error(`AI irraggiungibile: ${lastError}. Verifica di aver creato la Key nel progetto con fatturazione.`);
 };
 
 // --- UTILITY ---
