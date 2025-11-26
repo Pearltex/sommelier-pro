@@ -5,7 +5,8 @@ import {
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
   ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, 
-  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image as ImageIcon, ChevronRight, FileSpreadsheet
+  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image as ImageIcon, ChevronRight, 
+  FileSpreadsheet, Printer
 } from 'lucide-react';
 
 const Icons = {
@@ -14,7 +15,8 @@ const Icons = {
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
   ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, 
-  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image: ImageIcon, ChevronRight, FileSpreadsheet
+  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image: ImageIcon, ChevronRight, 
+  FileSpreadsheet, Printer
 };
 
 const APP_TITLE = "SOMMELIER PRO";
@@ -47,6 +49,20 @@ const AIS_TERMS = {
     EVOLUZIONE: ["Immaturo", "Giovane", "Pronto", "Maturo", "Vecchio"],
     ARMONIA: ["Poco Arm.", "Abb. Arm.", "Armonico"]
 };
+
+const MERCADINI_FOOD_CONFIG = [
+    { id: 'succulenza', label: 'Succulenza' },
+    { id: 'untuosita', label: 'Untuosità' },
+    { id: 'persistenza_cibo', label: 'Persistenza G.O.' },
+    { id: 'speziatura', label: 'Speziatura' },
+    { id: 'aromaticita', label: 'Aromaticità' },
+    { id: 'sapidita_cibo', label: 'Sapidità' },
+    { id: 'amaro', label: 'T. Amarognola' },
+    { id: 'acido', label: 'T. Acida' },
+    { id: 'dolcezza_cibo', label: 'Dolcezza' },
+    { id: 'grassezza', label: 'Grassezza' },
+    { id: 't_dolce', label: 'T. Dolce' }
+];
 
 // --- AI ENGINE ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
@@ -99,9 +115,9 @@ const getItemStyle = (type) => {
     if (t.includes("rosso")) return "bg-red-50 border-red-100 text-red-900 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-200";
     if (t.includes("bianco")) return "bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-yellow-900/20 dark:border-yellow-900/50 dark:text-yellow-200";
     if (t.includes("boll") || t.includes("spumante") || t.includes("champagne")) return "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-900/50 dark:text-amber-200";
-    if (t.includes("rosato") || t.includes("cerasuolo") || t.includes("chiaretto")) return "bg-pink-50 border-pink-200 text-pink-900 dark:bg-pink-900/20 dark:border-pink-900/50 dark:text-pink-200";
-    if (t.includes("birra") || t.includes("beer") || t.includes("ipa") || t.includes("lager")) return "bg-orange-100 border-orange-300 text-orange-900 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-200";
-    if (t.includes("spirit") || t.includes("distillato") || t.includes("whisky") || t.includes("rum")) return "bg-slate-200 border-slate-300 text-slate-900 dark:bg-slate-700 dark:border-slate-500 dark:text-slate-200";
+    if (t.includes("rosato") || t.includes("cerasuolo")) return "bg-pink-50 border-pink-200 text-pink-900 dark:bg-pink-900/20 dark:border-pink-900/50 dark:text-pink-200";
+    if (t.includes("birra")) return "bg-orange-100 border-orange-300 text-orange-900 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-200";
+    if (t.includes("spirit") || t.includes("distillato")) return "bg-slate-200 border-slate-300 text-slate-900 dark:bg-slate-700 dark:border-slate-500 dark:text-slate-200";
     return "bg-white border-gray-100 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200";
 };
 
@@ -119,7 +135,49 @@ const Button = ({ children, onClick, variant = 'primary', className = '', icon: 
 
 const Input = ({ label, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} <input className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 focus:bg-white transition-colors disabled:bg-gray-100 disabled:text-gray-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props} /> </div> );
 const Select = ({ label, options, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props}> <option value="">-- Seleziona --</option> {options.map(o => <option key={o} value={o}>{o}</option>)} </select> </div> );
-const Card = ({ children, className = '', onClick }) => ( <div onClick={onClick} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800 w-full overflow-hidden ${className} ${onClick ? 'cursor-pointer active:bg-gray-50 dark:active:bg-slate-800' : ''}`}>{children}</div> );
+const Card = ({ children, className = '', onClick }) => ( <div onClick={onClick} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800 w-full ${className} ${onClick ? 'cursor-pointer active:bg-gray-50 dark:active:bg-slate-800' : ''}`}>{children}</div> );
+
+// --- GRAFICO MERCADINI ---
+const PairingGraph = ({ foodValues, wineValues, activeFoodParams, activeWineParams }) => {
+    const size = 300;
+    const center = size / 2;
+    const radius = 100;
+    const numPoints = Math.max(activeFoodParams.length, activeWineParams.length);
+    const angleStep = (Math.PI * 2) / numPoints;
+
+    const getCoordinates = (values, params) => {
+        if (!params || params.length === 0) return "";
+        return params.map((p, i) => {
+            const val = values[p.id] || 0;
+            const angle = i * angleStep - Math.PI / 2; 
+            const r = (val / 10) * radius;
+            const x = center + r * Math.cos(angle);
+            const y = center + r * Math.sin(angle);
+            return `${x},${y}`;
+        }).join(" ");
+    };
+
+    const foodCoords = getCoordinates(foodValues, activeFoodParams);
+    const wineCoords = getCoordinates(wineValues, activeWineParams);
+    const axes = Array.from({ length: numPoints }).map((_, i) => {
+        const angle = i * angleStep - Math.PI / 2;
+        const x2 = center + radius * Math.cos(angle);
+        const y2 = center + radius * Math.sin(angle);
+        return <line key={i} x1={center} y1={center} x2={x2} y2={y2} stroke="#e5e7eb" strokeWidth="1" opacity="0.5" />;
+    });
+
+    return (
+        <div className="relative w-full flex justify-center bg-white dark:bg-slate-950 rounded-xl p-4 border border-gray-100 dark:border-slate-800">
+            <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                <circle cx={center} cy={center} r={radius} fill="none" stroke="#cbd5e1" strokeWidth="1" opacity="0.3" />
+                <circle cx={center} cy={center} r={radius * 0.5} fill="none" stroke="#cbd5e1" strokeWidth="1" opacity="0.3" />
+                {axes}
+                <polygon points={foodCoords} fill="rgba(249, 115, 22, 0.4)" stroke="#f97316" strokeWidth="2" />
+                <polygon points={wineCoords} fill="rgba(139, 92, 246, 0.4)" stroke="#8b5cf6" strokeWidth="2" />
+            </svg>
+        </div>
+    );
+};
 
 // --- MAIN APP ---
 function App() {
@@ -138,15 +196,12 @@ function App() {
         if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('somm_theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('somm_theme', 'light'); }
     }, [logs, cellar, apiKey, darkMode]);
 
-    // NAVIGATION HELPERS
     const goBack = () => {
         if (session) {
             if (session.step === 'adding') setSession({ ...session, step: 'context' });
             else if (session.step === 'context') { setSession(null); setTab('home'); }
             else if (session.step === 'finish') setSession({ ...session, step: 'context' });
-        } else {
-            setTab('home');
-        }
+        } else { setTab('home'); }
     };
 
     const startSession = (mode, initialItemData = null) => {
@@ -178,7 +233,6 @@ function App() {
         setSession(null); setTab('history');
     };
 
-    // CSV EXPORT
     const exportCSV = () => {
         let csvContent = "\uFEFFData,Vino,Produttore,Tipologia,Prezzo,Voto\n"; 
         logs.forEach(l => {
@@ -194,7 +248,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "23.0" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "27.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -209,15 +263,11 @@ function App() {
         }; reader.readAsText(file);
     };
 
-    // LAYOUT FIXED STRUTTURATO
-    // Questo è il trucco per PC e Mobile: un contenitore esterno che simula il device
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-black flex items-center justify-center font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
-            
-            {/* CONTENITORE APP "SCATOLA CHIUSA" */}
             <div className="w-full max-w-md h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative shadow-2xl overflow-hidden border-x border-gray-200 dark:border-slate-800">
                 
-                {/* HEADER (Parte della colonna flex, non fixed) */}
+                {/* HEADER */}
                 <div className="z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
                     <div className="flex items-center gap-2">
                         {tab !== 'home' && <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.ArrowLeft size={20}/></button>}
@@ -231,7 +281,7 @@ function App() {
                     </div>
                 </div>
 
-                {/* IMPOSTAZIONI MODALE (ASSOLUTA SUL CONTENITORE) */}
+                {/* IMPOSTAZIONI */}
                 {showSettings && (
                     <div className="absolute inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
                         <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl border border-gray-200 dark:border-slate-700">
@@ -250,24 +300,25 @@ function App() {
                     </div>
                 )}
 
-                {/* MAIN CONTENT (SCROLLABLE INTERNAMENTE) */}
-                <main className="flex-1 overflow-y-auto p-4 w-full scroll-smooth relative">
+                {/* MAIN CONTENT */}
+                <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 w-full relative scroll-smooth">
                     {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
                     {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
                     {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
                     {tab === 'stats' && <StatsView logs={logs} cellar={cellar} />}
                     {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={goBack} apiKey={apiKey} />}
-                    {/* SPAZIO EXTRA PER EVITARE CHE L'ULTIMO ELEMENTO FINISCA SOTTO (opzionale dato flex, ma utile) */}
-                    <div className="h-4"></div> 
+                    <div className="h-6"></div>
                 </main>
 
-                {/* NAVBAR (Parte della colonna, sempre visibile, mai coperta) */}
-                <nav className="shrink-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 h-16 flex justify-around items-center z-50 w-full">
-                    <NavItem icon={Icons.Home} label="Home" active={tab === 'home'} onClick={() => setTab('home')} />
-                    <NavItem icon={Icons.Archive} label="Cantina" active={tab === 'cantina'} onClick={() => setTab('cantina')} />
-                    <NavItem icon={Icons.Search} label="Diario" active={tab === 'history'} onClick={() => setTab('history')} />
-                    <NavItem icon={Icons.BarChart3} label="Stats" active={tab === 'stats'} onClick={() => setTab('stats')} />
-                </nav>
+                {/* NAVBAR */}
+                {(!session || tab !== 'session') && (
+                    <nav className="shrink-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 h-16 flex justify-around items-center w-full z-50">
+                        <NavItem icon={Icons.Home} label="Home" active={tab === 'home'} onClick={() => setTab('home')} />
+                        <NavItem icon={Icons.Archive} label="Cantina" active={tab === 'cantina'} onClick={() => setTab('cantina')} />
+                        <NavItem icon={Icons.Search} label="Diario" active={tab === 'history'} onClick={() => setTab('history')} />
+                        <NavItem icon={Icons.BarChart3} label="Stats" active={tab === 'stats'} onClick={() => setTab('stats')} />
+                    </nav>
+                )}
 
             </div>
         </div>
@@ -319,6 +370,10 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [pairCounts, setPairCounts] = useState({ Rosso: 0, Bianco: 0, Bollicine: 0, Rosato: 0, Birra: 0, Spirit: 0 });
     const [pairingSuggestions, setPairingSuggestions] = useState([]);
     
+    // GRAFICO MERCADINI STATE
+    const [pairingValuesFood, setPairingValuesFood] = useState({});
+    const [pairingValuesWine, setPairingValuesWine] = useState({});
+
     const fileInput = useRef(null);
 
     const getColorOptions = (type) => {
@@ -364,12 +419,6 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         } catch (e) { alert(e.message); } finally { setIsAiLoading(false); }
     };
 
-    const toggleFlavor = (tag) => {
-        const current = item.flavorTags || [];
-        if(current.includes(tag)) setItem({...item, flavorTags: current.filter(t => t !== tag)});
-        else setItem({...item, flavorTags: [...current, tag]});
-    };
-
     const updateCount = (type, delta) => setPairCounts(prev => ({ ...prev, [type]: Math.max(0, prev[type] + delta) }));
     const currentGrapeTotal = (item.grapes || []).reduce((acc, g) => acc + parseInt(g.perc || 0), 0);
     const addGrape = () => { if (!tempGrape || !tempPerc) return; setItem(prev => ({ ...prev, grapes: [...(prev.grapes || []), { name: tempGrape, perc: parseInt(tempPerc) }] })); setTempGrape(""); setTempPerc(""); };
@@ -384,6 +433,43 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const removePhoto = (idx) => setItem(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }));
     const addItem = () => { if(session.mode === 'Acquisto') onSave({ ...session, items: [item] }); else { setSession(prev => ({ ...prev, items: [...prev.items, item] })); setItem({}); setStep('context'); } };
     
+    // EXPORT PDF (STAMPA)
+    const handlePrint = () => { window.print(); };
+
+    // EXPORT EXCEL PAIRING
+    const handleExportPairing = () => {
+        let csv = "\uFEFFParametro,Valore Cibo,Valore Vino\n";
+        MERCADINI_FOOD_CONFIG.forEach((p, i) => {
+            csv += `${p.label},${pairingValuesFood[p.id] || 0},${0}\n`; 
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `abbinamento_${item.food || 'cibo'}_${item.wine || 'vino'}.csv`;
+        link.click();
+    };
+
+    // COSTRUTTORE PARAMETRI VINO DINAMICO (Basato su tipo)
+    const getWineParams = () => {
+        const t = (item.type || "").toLowerCase();
+        let params = [
+            { id: 'intensita', label: 'Intensità' },
+            { id: 'pai', label: 'P.A.I.' },
+            { id: 'acidita', label: 'Acidità' }
+        ];
+        if (showEffervescence(t)) params.push({ id: 'effervescenza', label: 'Effervescenza' });
+        params.push({ id: 'sapidita_vino', label: 'Sapidità' });
+        if (showTannins(t)) params.push({ id: 'tannicita', label: 'Tannicità' });
+        params.push(
+            { id: 'alcol', label: 'Alcolicità' },
+            { id: 'dolcezza_vino', label: 'Dolcezza' },
+            { id: 'morbidezza', label: 'Morbidezza' }
+        );
+        return params;
+    };
+
+    const wineParams = getWineParams();
+
     const CounterBtn = ({ type, label }) => (
         <div className="flex flex-col items-center bg-gray-50 dark:bg-slate-800 p-2 rounded-xl border border-gray-100 dark:border-slate-700 min-w-[70px] flex-shrink-0">
             <span className="text-[9px] font-bold uppercase text-gray-400 mb-1">{label}</span>
@@ -538,7 +624,92 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                             </div>
                         </div>
                     )}
-                    {(aisTab === '2.0' || aisTab === 'pairing') && (<div className="mt-3 p-6 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-dashed border-gray-300 dark:border-slate-700 text-center animate-in slide-in-from-top-2"><Icons.Loader2 className="animate-spin mx-auto text-gray-400 mb-2" size={24}/><p className="text-sm text-gray-500 font-medium">Under Construction 🚧</p></div>)}
+                    
+                    {/* ABBINAMENTO CIBO VINO (GRAFICO MERCADINI) */}
+                    {aisTab === 'pairing' && (
+                        <div className="mt-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800 animate-in slide-in-from-top-2 space-y-4">
+                            <h4 className="text-center font-bold text-orange-600 dark:text-orange-300 mb-2">Grafico di Abbinamento</h4>
+                            
+                            {/* IL GRAFICO SVG */}
+                            <PairingGraph foodValues={pairingValuesFood} wineValues={pairingValuesWine} activeFoodParams={MERCADINI_FOOD_CONFIG} activeWineParams={wineParams} />
+                            
+                            {/* INPUT CIBO */}
+                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-200 dark:border-slate-700">
+                                <h5 className="text-xs font-bold text-orange-500 uppercase mb-2 text-center">Analisi Cibo (0-10)</h5>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {MERCADINI_FOOD_CONFIG.map(p => (
+                                        <div key={p.id}>
+                                            <label className="block text-[9px] font-bold text-gray-400 mb-1">{p.label}</label>
+                                            <input type="range" min="0" max="10" step="1" className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500" value={pairingValuesFood[p.id] || 0} onChange={e => setPairingValuesFood({...pairingValuesFood, [p.id]: parseInt(e.target.value)})} />
+                                            <div className="text-center text-xs font-bold text-slate-700 dark:text-white">{pairingValuesFood[p.id] || 0}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* INPUT VINO */}
+                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-200 dark:border-slate-700">
+                                <h5 className="text-xs font-bold text-indigo-500 uppercase mb-2 text-center">Analisi Vino (0-10)</h5>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {wineParams.map((p, i) => (
+                                        <div key={i}>
+                                            <label className="block text-[9px] font-bold text-gray-400 mb-1">{p.label}</label>
+                                            <input type="range" min="0" max="10" step="1" className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-500" value={pairingValuesWine[p.id] || 0} onChange={e => setPairingValuesWine({...pairingValuesWine, [p.id]: parseInt(e.target.value)})} />
+                                            <div className="text-center text-xs font-bold text-slate-700 dark:text-white">{pairingValuesWine[p.id] || 0}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* STRUTTURA vs CORPO */}
+                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-200 dark:border-slate-700 mt-3">
+                                <h5 className="text-xs font-bold text-slate-500 uppercase mb-3 text-center">Struttura vs Corpo</h5>
+                                
+                                {/* CIBO: Struttura */}
+                                <div className="mb-4">
+                                    <div className="flex justify-between text-[9px] font-bold text-gray-400 mb-1">
+                                        <span>Poco Strut.</span>
+                                        <span>Abb. Strut.</span>
+                                        <span>Strutturato</span>
+                                    </div>
+                                    <label className="block text-[10px] font-bold text-orange-500 mb-1">Struttura del Cibo</label>
+                                    <input type="range" min="0" max="10" className="w-full h-2 bg-orange-100 rounded-lg appearance-none cursor-pointer accent-orange-500" value={item.mercadini_structure_food || 0} onChange={e => setItem({...item, mercadini_structure_food: e.target.value})} />
+                                    <div className="text-center font-bold text-orange-600 dark:text-orange-400">{item.mercadini_structure_food || 0}</div>
+                                </div>
+
+                                {/* VINO: Corpo */}
+                                <div>
+                                    <div className="flex justify-between text-[9px] font-bold text-gray-400 mb-1">
+                                        <span>Debole</span>
+                                        <span>Di Corpo</span>
+                                        <span>Robusto</span>
+                                    </div>
+                                    <label className="block text-[10px] font-bold text-indigo-500 mb-1">Corpo del Vino</label>
+                                    <input type="range" min="0" max="10" className="w-full h-2 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-500" value={item.mercadini_body_wine || 0} onChange={e => setItem({...item, mercadini_body_wine: e.target.value})} />
+                                    <div className="text-center font-bold text-indigo-600 dark:text-indigo-400">{item.mercadini_body_wine || 0}</div>
+                                </div>
+                            </div>
+
+                            {/* OSSERVAZIONI FINALI */}
+                            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800 mt-3">
+                                <h5 className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-2 text-center">Giudizio di Abbinamento</h5>
+                                <div className="flex justify-between text-[9px] font-bold text-gray-400 dark:text-gray-500 mb-1">
+                                    <span>Poco Armonico</span>
+                                    <span>Abb. Armonico</span>
+                                    <span>Armonico</span>
+                                </div>
+                                <input type="range" min="0" max="10" className="w-full h-2 bg-emerald-200 rounded-lg appearance-none cursor-pointer accent-emerald-600" value={item.mercadini_harmony || 0} onChange={e => setItem({...item, mercadini_harmony: e.target.value})} />
+                                <div className="text-center text-xl font-black text-emerald-700 dark:text-emerald-400 mt-1">{item.mercadini_harmony || 0}/10</div>
+                            </div>
+                            
+                            <div className="flex gap-2 pt-2">
+                                <button onClick={handleExportPairing} className="flex-1 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1"><Icons.FileSpreadsheet size={14}/> Scarica Excel</button>
+                                <button onClick={handlePrint} className="flex-1 py-2 bg-slate-800 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1"><Icons.Printer size={14}/> Stampa PDF</button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {aisTab === '2.0' && (<div className="mt-3 p-6 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-dashed border-gray-300 dark:border-slate-700 text-center animate-in slide-in-from-top-2"><Icons.Loader2 className="animate-spin mx-auto text-gray-400 mb-2" size={24}/><p className="text-sm text-gray-500 font-medium">Under Construction 🚧</p></div>)}
                 </div>
             )}
 
