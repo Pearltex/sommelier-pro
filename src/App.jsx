@@ -208,9 +208,10 @@ function App() {
         }; reader.readAsText(file);
     };
 
+    // NOTA: Aggiunto overflow-x-hidden per evitare scroll laterale indesiderato
     return (
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
-            <div className="bg-white dark:bg-slate-900 sticky top-0 z-50 px-4 py-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center shadow-sm h-16">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300 overflow-x-hidden">
+            <div className="bg-white dark:bg-slate-900 sticky top-0 z-50 px-4 py-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center shadow-sm h-16 w-full max-w-md mx-auto">
                 <div className="flex items-center gap-2">
                     {tab !== 'home' && <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.ArrowLeft size={20}/></button>}
                     <h1 className="text-xl font-black tracking-tight text-slate-800 dark:text-white">{APP_TITLE}</h1>
@@ -238,7 +239,8 @@ function App() {
                 </div>
             )}
 
-            <main className="p-4 max-w-md mx-auto w-full overflow-x-hidden">
+            {/* NOTA: max-w-md mx-auto centra il contenuto e evita overflow */}
+            <main className="p-4 max-w-md mx-auto w-full">
                 {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
                 {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
                 {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
@@ -247,7 +249,7 @@ function App() {
             </main>
 
             {(!session || tab !== 'session') && (
-                <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 pb-safe pt-2 flex justify-around items-center z-50 h-16">
+                <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 pb-safe pt-2 flex justify-around items-center z-50 h-16 max-w-md mx-auto left-0 right-0">
                     <NavItem icon={Icons.Home} label="Home" active={tab === 'home'} onClick={() => setTab('home')} />
                     <NavItem icon={Icons.Archive} label="Cantina" active={tab === 'cantina'} onClick={() => setTab('cantina')} />
                     <NavItem icon={Icons.Search} label="Diario" active={tab === 'history'} onClick={() => setTab('history')} />
@@ -500,6 +502,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                         <button onClick={() => setAisTab(aisTab === '1.0' ? null : '1.0')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === '1.0' ? 'bg-emerald-100 border-emerald-500 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Scheda AIS 1.0</button>
                         <button onClick={() => setAisTab(aisTab === '2.0' ? null : '2.0')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === '2.0' ? 'bg-indigo-100 border-indigo-500 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Scheda AIS 2.0</button>
                     </div>
+                    
                     <button onClick={() => setAisTab(aisTab === 'pairing' ? null : 'pairing')} className={`w-full py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === 'pairing' ? 'bg-orange-100 border-orange-500 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Abbinamento Cibo-Vino</button>
 
                     {/* CONTENUTO SCHEDA 1.0 */}
