@@ -48,6 +48,7 @@ const AIS_TERMS = {
     ARMONIA: ["Poco Arm.", "Abb. Arm.", "Armonico"]
 };
 
+// --- AI ENGINE ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante.");
     const MODEL = "gemini-1.5-flash"; 
@@ -76,6 +77,7 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
     } catch (error) { throw new Error(error.message); }
 };
 
+// --- UTILS ---
 const resizeImage = (file) => {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -103,6 +105,7 @@ const getItemStyle = (type) => {
     return "bg-white border-gray-100 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200";
 };
 
+// --- COMPONENTS ---
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, isLoading = false }) => {
     const styles = {
         primary: "bg-slate-900 text-white shadow-slate-300 dark:bg-indigo-600 dark:text-white dark:shadow-none",
@@ -135,12 +138,15 @@ function App() {
         if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('somm_theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('somm_theme', 'light'); }
     }, [logs, cellar, apiKey, darkMode]);
 
+    // NAVIGATION HELPERS
     const goBack = () => {
         if (session) {
             if (session.step === 'adding') setSession({ ...session, step: 'context' });
             else if (session.step === 'context') { setSession(null); setTab('home'); }
             else if (session.step === 'finish') setSession({ ...session, step: 'context' });
-        } else { setTab('home'); }
+        } else {
+            setTab('home');
+        }
     };
 
     const startSession = (mode, initialItemData = null) => {
@@ -172,6 +178,7 @@ function App() {
         setSession(null); setTab('history');
     };
 
+    // CSV EXPORT
     const exportCSV = () => {
         let csvContent = "\uFEFFData,Vino,Produttore,Tipologia,Prezzo,Voto\n"; 
         logs.forEach(l => {
@@ -203,12 +210,14 @@ function App() {
     };
 
     // LAYOUT FIXED STRUTTURATO
+    // Questo è il trucco per PC e Mobile: un contenitore esterno che simula il device
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-black flex items-center justify-center font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
-            {/* CONTENITORE APP SIMIL-MOBILE */}
-            <div className="w-full max-w-md h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative shadow-2xl overflow-hidden">
+            
+            {/* CONTENITORE APP "SCATOLA CHIUSA" */}
+            <div className="w-full max-w-md h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative shadow-2xl overflow-hidden border-x border-gray-200 dark:border-slate-800">
                 
-                {/* HEADER */}
+                {/* HEADER (Parte della colonna flex, non fixed) */}
                 <div className="z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
                     <div className="flex items-center gap-2">
                         {tab !== 'home' && <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.ArrowLeft size={20}/></button>}
@@ -222,12 +231,12 @@ function App() {
                     </div>
                 </div>
 
-                {/* IMPOSTAZIONI MODALE (ASSOLUTA) */}
+                {/* IMPOSTAZIONI MODALE (ASSOLUTA SUL CONTENITORE) */}
                 {showSettings && (
                     <div className="absolute inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-                        <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl">
+                        <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl border border-gray-200 dark:border-slate-700">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-bold text-lg flex items-center gap-2"><Icons.Sparkles size={18} className="text-indigo-500"/> Impostazioni</h3>
+                                <h3 className="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white"><Icons.Sparkles size={18} className="text-indigo-500"/> Impostazioni</h3>
                                 <button onClick={() => setShowSettings(false)} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"><Icons.X size={20}/></button>
                             </div>
                             <Input label="Gemini API Key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIzaSy..." />
@@ -241,18 +250,18 @@ function App() {
                     </div>
                 )}
 
-                {/* MAIN CONTENT (SCROLLABLE) */}
-                <main className="flex-1 overflow-y-auto p-4 w-full scroll-smooth">
+                {/* MAIN CONTENT (SCROLLABLE INTERNAMENTE) */}
+                <main className="flex-1 overflow-y-auto p-4 w-full scroll-smooth relative">
                     {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
                     {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
                     {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
                     {tab === 'stats' && <StatsView logs={logs} cellar={cellar} />}
                     {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={goBack} apiKey={apiKey} />}
-                    {/* SPAZIO EXTRA PER NON COPRIRE L'ULTIMO ELEMENTO COL MENU */}
-                    <div className="h-20"></div>
+                    {/* SPAZIO EXTRA PER EVITARE CHE L'ULTIMO ELEMENTO FINISCA SOTTO (opzionale dato flex, ma utile) */}
+                    <div className="h-4"></div> 
                 </main>
 
-                {/* NAVBAR (STICKY BOTTOM INSIDE CONTAINER) */}
+                {/* NAVBAR (Parte della colonna, sempre visibile, mai coperta) */}
                 <nav className="shrink-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 h-16 flex justify-around items-center z-50 w-full">
                     <NavItem icon={Icons.Home} label="Home" active={tab === 'home'} onClick={() => setTab('home')} />
                     <NavItem icon={Icons.Archive} label="Cantina" active={tab === 'cantina'} onClick={() => setTab('cantina')} />
@@ -310,8 +319,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [pairCounts, setPairCounts] = useState({ Rosso: 0, Bianco: 0, Bollicine: 0, Rosato: 0, Birra: 0, Spirit: 0 });
     const [pairingSuggestions, setPairingSuggestions] = useState([]);
     
-    const fileInputFood = useRef(null);
-    const fileInputWine = useRef(null);
+    const fileInput = useRef(null);
 
     const getColorOptions = (type) => {
         const t = (type || "").toLowerCase();
@@ -475,8 +483,6 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 {(session.mode === 'Acquisto' || item.buyPlace) && (<div className="grid grid-cols-2 gap-2"><Input label="Dove l'hai preso?" placeholder="Enoteca..." value={item.buyPlace || ''} onChange={e => setItem({...item, buyPlace: e.target.value})} /><Input label="Posizione Cantina" placeholder="Scaffale A..." value={item.location || ''} onChange={e => setItem({...item, location: e.target.value})} /></div>)}
                 {session.mode === 'Acquisto' && (<div onClick={() => setItem({...item, isWishlist: !item.isWishlist})} className={`p-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer mb-3 ${item.isWishlist ? 'bg-pink-50 border-pink-200 text-pink-600 dark:bg-pink-900/20 dark:text-pink-300' : 'bg-gray-50 border-gray-200 text-gray-500 dark:bg-slate-800 dark:border-slate-700'}`}><Icons.Heart size={18} fill={item.isWishlist ? "currentColor" : "none"} /><span className="text-sm font-bold">{item.isWishlist ? "Nella Lista Desideri" : "Aggiungi ai Desideri"}</span></div>)}
             </Card>
-
-            {/* 🏷️ FLAVOR TAGS RIMOSSI COME RICHIESTO */}
 
             {session.mode !== 'Acquisto' && (
                 <div className="mt-4 mb-4">
