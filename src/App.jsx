@@ -5,7 +5,7 @@ import {
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
   ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, 
-  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image as ImageIcon, ChevronRight, FileSpreadsheet
+  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image as ImageIcon, ChevronRight
 } from 'lucide-react';
 
 const Icons = {
@@ -14,24 +14,23 @@ const Icons = {
   ChevronUp, Star, FileText, Pencil, Trash2, Camera, DownloadCloud, UploadCloud,
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
   ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, 
-  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image: ImageIcon, ChevronRight, FileSpreadsheet
+  Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image: ImageIcon, ChevronRight
 };
 
 const APP_TITLE = "SOMMELIER PRO";
 
-const FLAVOR_TAGS = ["Fruttato", "Floreale", "Minerale", "Speziato", "Erbaceo", "Tostato", "Etereo", "Dolce", "Tannico", "Fresco", "Sapido", "Caldo", "Luppolato", "Maltato", "Torbatura", "Affumicato"];
-
+// --- DATABASE TERMINI AIS ---
 const AIS_TERMS = {
-    LIMPIDEZZA: ["Velato", "Abb. Limpido", "Limpido", "Cristallino", "Brillante"],
+    LIMPIDEZZA: ["Velato", "Abbastanza Limpido", "Limpido", "Cristallino", "Brillante"],
     COLORE_ROSSO: ["Porpora", "Rubino", "Granato", "Aranciato"],
     COLORE_BIANCO: ["Verdolino", "Paglierino", "Dorato", "Ambrato"],
     COLORE_ROSATO: ["Tenue", "Cerasuolo", "Chiaretto"],
-    CONSISTENZA: ["Fluido", "Poco Cons.", "Abb. Cons.", "Consistente", "Viscoso"],
+    CONSISTENZA: ["Fluido", "Poco Consistente", "Abb. Consistente", "Consistente", "Viscoso"],
     GRANA_BOL: ["Grossolane", "Abb. Fini", "Fini"],
-    NUMERO_BOL: ["Scarse", "Abb. Num.", "Numerose"],
-    PERS_BOL: ["Evanescenti", "Abb. Pers.", "Persistenti"],
-    INTENSITA: ["Carente", "Poco Int.", "Abb. Int.", "Intenso", "Molto Int."],
-    COMPLESSITA: ["Carente", "Poco Comp.", "Abb. Comp.", "Complesso", "Ampio"],
+    NUMERO_BOL: ["Scarse", "Abb. Numerose", "Numerose"],
+    PERS_BOL: ["Evanescenti", "Abb. Persistenti", "Persistenti"],
+    INTENSITA: ["Carente", "Poco Intenso", "Abb. Intenso", "Intenso", "Molto Intenso"],
+    COMPLESSITA: ["Carente", "Poco Complesso", "Abb. Complesso", "Complesso", "Ampio"],
     QUALITA: ["Comune", "Poco Fine", "Abb. Fine", "Fine", "Eccellente"],
     ZUCCHERI: ["Secco", "Abboccato", "Amabile", "Dolce", "Stucchevole"],
     ALCOLI: ["Leggero", "Poco Caldo", "Abb. Caldo", "Caldo", "Alcolico"],
@@ -40,15 +39,15 @@ const AIS_TERMS = {
     TANNINI: ["Molle", "Poco Tannico", "Abb. Tannico", "Tannico", "Astringente"],
     MINERALI: ["Scipito", "Poco Sapido", "Abb. Sapido", "Sapido", "Salato"],
     CORPO: ["Magro", "Debole", "Di Corpo", "Robusto", "Pesante"],
-    EQUILIBRIO: ["Poco Equil.", "Abb. Equil.", "Equilibrato"],
-    INTENSITA_GUS: ["Carente", "Poco Int.", "Abb. Int.", "Intenso", "Molto Int."],
-    PERSISTENZA: ["Corto", "Poco Pers.", "Abb. Pers.", "Persistente", "Molto Pers."],
+    EQUILIBRIO: ["Poco Equilibrato", "Abb. Equilibrato", "Equilibrato"],
+    INTENSITA_GUS: ["Carente", "Poco Intenso", "Abb. Intenso", "Intenso", "Molto Intenso"],
+    PERSISTENZA: ["Corto", "Poco Persistente", "Abb. Persistente", "Persistente", "Molto Persistente"],
     QUALITA_GUS: ["Comune", "Poco Fine", "Abb. Fine", "Fine", "Eccellente"],
     EVOLUZIONE: ["Immaturo", "Giovane", "Pronto", "Maturo", "Vecchio"],
-    ARMONIA: ["Poco Arm.", "Abb. Arm.", "Armonico"]
+    ARMONIA: ["Poco Armonico", "Abb. Armonico", "Armonico"]
 };
 
-// --- AI ENGINE ---
+// --- INFRASTRUTTURA AI ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante.");
     const MODEL = "gemini-1.5-flash"; 
@@ -77,7 +76,7 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
     } catch (error) { throw new Error(error.message); }
 };
 
-// --- UTILS ---
+// --- UTILITY ---
 const resizeImage = (file) => {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -99,13 +98,13 @@ const getItemStyle = (type) => {
     if (t.includes("rosso")) return "bg-red-50 border-red-100 text-red-900 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-200";
     if (t.includes("bianco")) return "bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-yellow-900/20 dark:border-yellow-900/50 dark:text-yellow-200";
     if (t.includes("boll") || t.includes("spumante") || t.includes("champagne")) return "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-900/50 dark:text-amber-200";
-    if (t.includes("rosato") || t.includes("cerasuolo")) return "bg-pink-50 border-pink-200 text-pink-900 dark:bg-pink-900/20 dark:border-pink-900/50 dark:text-pink-200";
-    if (t.includes("birra")) return "bg-orange-50 border-orange-200 text-orange-900 dark:bg-orange-900/20 dark:border-orange-900/50 dark:text-orange-200";
-    if (t.includes("spirit") || t.includes("distillato")) return "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300";
+    if (t.includes("rosato") || t.includes("cerasuolo") || t.includes("chiaretto")) return "bg-pink-50 border-pink-200 text-pink-900 dark:bg-pink-900/20 dark:border-pink-900/50 dark:text-pink-200";
+    if (t.includes("birra") || t.includes("beer") || t.includes("ipa") || t.includes("lager")) return "bg-orange-100 border-orange-300 text-orange-900 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-200";
+    if (t.includes("spirit") || t.includes("distillato") || t.includes("whisky") || t.includes("rum")) return "bg-slate-200 border-slate-300 text-slate-900 dark:bg-slate-700 dark:border-slate-500 dark:text-slate-200";
     return "bg-white border-gray-100 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200";
 };
 
-// --- COMPONENTS ---
+// --- UI COMPONENTS ---
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, isLoading = false }) => {
     const styles = {
         primary: "bg-slate-900 text-white shadow-slate-300 dark:bg-indigo-600 dark:text-white dark:shadow-none",
@@ -117,9 +116,9 @@ const Button = ({ children, onClick, variant = 'primary', className = '', icon: 
     return ( <button onClick={onClick} disabled={isLoading} className={`w-full py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed ${styles[variant]} ${className}`}> {isLoading ? <Icons.Loader2 size={18} className="animate-spin"/> : (Icon && <Icon size={18} />)} {children} </button> );
 };
 
-const Input = ({ label, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-400">{label}</label>} <input className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 focus:bg-white transition-colors disabled:bg-gray-100 disabled:text-gray-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props} /> </div> );
-const Select = ({ label, options, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-400">{label}</label>} <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props}> <option value="">-- Seleziona --</option> {options.map(o => <option key={o} value={o}>{o}</option>)} </select> </div> );
-const Card = ({ children, className = '', onClick }) => ( <div onClick={onClick} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800 w-full overflow-hidden ${className} ${onClick ? 'cursor-pointer active:bg-gray-50 dark:active:bg-slate-800' : ''}`}>{children}</div> );
+const Input = ({ label, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} <input className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 focus:bg-white transition-colors disabled:bg-gray-100 disabled:text-gray-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props} /> </div> );
+const Select = ({ label, options, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props}> <option value="">-- Seleziona --</option> {options.map(o => <option key={o} value={o}>{o}</option>)} </select> </div> );
+const Card = ({ children, className = '', onClick }) => ( <div onClick={onClick} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800 ${className} ${onClick ? 'cursor-pointer active:bg-gray-50 dark:active:bg-slate-800' : ''}`}>{children}</div> );
 
 // --- MAIN APP ---
 function App() {
@@ -138,12 +137,15 @@ function App() {
         if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('somm_theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('somm_theme', 'light'); }
     }, [logs, cellar, apiKey, darkMode]);
 
+    // NAVIGATION HELPERS
     const goBack = () => {
         if (session) {
             if (session.step === 'adding') setSession({ ...session, step: 'context' });
             else if (session.step === 'context') { setSession(null); setTab('home'); }
             else if (session.step === 'finish') setSession({ ...session, step: 'context' });
-        } else { setTab('home'); }
+        } else {
+            setTab('home');
+        }
     };
 
     const startSession = (mode, initialItemData = null) => {
@@ -175,6 +177,7 @@ function App() {
         setSession(null); setTab('history');
     };
 
+    // CSV EXPORT
     const exportCSV = () => {
         let csvContent = "\uFEFFData,Vino,Produttore,Tipologia,Prezzo,Voto\n"; 
         logs.forEach(l => {
@@ -190,7 +193,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "21.1" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "20.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -206,27 +209,24 @@ function App() {
     };
 
     return (
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300 flex flex-col">
-            <div className="bg-white dark:bg-slate-900 sticky top-0 z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center shadow-sm h-16 flex-shrink-0">
+        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
+            <div className="bg-white dark:bg-slate-900 sticky top-0 z-50 px-4 py-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center shadow-sm h-16">
                 <div className="flex items-center gap-2">
                     {tab !== 'home' && <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.ArrowLeft size={20}/></button>}
-                    <h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white truncate max-w-[200px]">{APP_TITLE}</h1>
+                    <h1 className="text-xl font-black tracking-tight text-slate-800 dark:text-white">{APP_TITLE}</h1>
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
+                <div className="flex gap-3">
+                    <button onClick={() => setDarkMode(!darkMode)} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
                         {darkMode ? <Icons.Sun size={20} /> : <Icons.Moon size={20} />}
                     </button>
-                    <button onClick={() => setShowSettings(true)} className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.Settings size={20}/></button>
+                    <button onClick={() => setShowSettings(true)} className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"><Icons.Settings size={20}/></button>
                 </div>
             </div>
 
             {showSettings && (
                 <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2 text-slate-900 dark:text-white"><Icons.Sparkles size={18} className="text-indigo-500"/> Impostazioni</h3>
-                            <button onClick={() => setShowSettings(false)} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"><Icons.X size={20}/></button>
-                        </div>
+                    <Card className="w-full max-w-sm animate-in zoom-in-95">
+                        <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg flex items-center gap-2"><Icons.Sparkles size={18} className="text-indigo-500"/> Impostazioni</h3><button onClick={() => setShowSettings(false)}><Icons.X size={20}/></button></div>
                         <Input label="Gemini API Key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIzaSy..." />
                         <Button onClick={() => setShowSettings(false)} variant="primary">Salva</Button>
                         <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
@@ -238,7 +238,7 @@ function App() {
                 </div>
             )}
 
-            <main className="p-4 w-full max-w-md mx-auto overflow-x-hidden flex-grow">
+            <main className="p-4 max-w-md mx-auto w-full overflow-x-hidden">
                 {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
                 {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
                 {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
@@ -247,7 +247,7 @@ function App() {
             </main>
 
             {(!session || tab !== 'session') && (
-                <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 pb-safe pt-2 flex justify-around items-center z-50 h-16 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <nav className="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 pb-safe pt-2 flex justify-around items-center z-50 h-16">
                     <NavItem icon={Icons.Home} label="Home" active={tab === 'home'} onClick={() => setTab('home')} />
                     <NavItem icon={Icons.Archive} label="Cantina" active={tab === 'cantina'} onClick={() => setTab('cantina')} />
                     <NavItem icon={Icons.Search} label="Diario" active={tab === 'history'} onClick={() => setTab('history')} />
@@ -259,7 +259,7 @@ function App() {
 }
 
 const NavItem = ({ icon: Icon, label, active, onClick }) => (
-    <button onClick={onClick} className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${active ? 'text-slate-900 dark:text-white' : 'text-gray-300 dark:text-slate-600'}`}>
+    <button onClick={onClick} className={`flex flex-col items-center justify-center w-full h-full gap-1 ${active ? 'text-slate-900 dark:text-white' : 'text-gray-300 dark:text-slate-600'}`}>
         <Icon size={24} strokeWidth={active ? 2.5 : 2} />
         <span className="text-[10px] font-medium">{label}</span>
     </button>
@@ -274,8 +274,8 @@ function HomeView({ startSession, logs, cellar, setTab }) {
                     <p className="text-slate-400 dark:text-indigo-300 text-xs font-bold uppercase tracking-widest">Investimento Totale</p>
                     <h2 className="text-4xl font-black tracking-tight mt-1">€{totalSpent.toLocaleString()}</h2>
                     <div className="flex gap-3 mt-4">
-                        <div onClick={() => setTab('history')} className="bg-slate-800/50 dark:bg-black/30 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-2 cursor-pointer hover:bg-slate-800/70 active:scale-95 transition-all"><Icons.Wine size={12} className="text-pink-500"/> {logs.length} Eventi</div>
-                        <div onClick={() => setTab('cantina')} className="bg-slate-800/50 dark:bg-black/30 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-2 cursor-pointer hover:bg-slate-800/70 active:scale-95 transition-all"><Icons.Archive size={12} className="text-emerald-500"/> {cellar.length} Bottiglie</div>
+                        <span onClick={() => setTab('history')} className="cursor-pointer hover:underline opacity-90 hover:opacity-100 text-xs font-bold flex items-center gap-2"><Icons.Wine size={12} className="text-pink-500"/> {logs.length} Eventi</span>
+                        <span onClick={() => setTab('cantina')} className="cursor-pointer hover:underline opacity-90 hover:opacity-100 text-xs font-bold flex items-center gap-2"><Icons.Archive size={12} className="text-emerald-500"/> {cellar.length} Bottiglie</span>
                     </div>
                 </div>
             </div>
@@ -299,16 +299,19 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [tempFriend, setTempFriend] = useState("");
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aisTab, setAisTab] = useState(null);
-    const [sommOpen, setSommOpen] = useState(false); 
+    const [sommOpen, setSommOpen] = useState(false); // Accordion state
+    
+    // SOMMELIER
     const [pairCounts, setPairCounts] = useState({ Rosso: 0, Bianco: 0, Bollicine: 0, Rosato: 0, Birra: 0, Spirit: 0 });
     const [pairingSuggestions, setPairingSuggestions] = useState([]);
     
     const fileInput = useRef(null);
 
+    // LOGICHE DINAMICHE
     const getColorOptions = (type) => {
         const t = (type || "").toLowerCase();
-        if (t.includes("bianco") || t.includes("bollicine")) return AIS_TERMS.COLORE_BIANCO;
-        if (t.includes("rosato") || t.includes("cerasuolo")) return AIS_TERMS.COLORE_ROSATO;
+        if (t.includes("bianco") || t.includes("bollicine") || t.includes("spumante") || t.includes("champagne")) return AIS_TERMS.COLORE_BIANCO;
+        if (t.includes("rosato") || t.includes("cerasuolo") || t.includes("chiaretto")) return AIS_TERMS.COLORE_ROSATO;
         return AIS_TERMS.COLORE_ROSSO; 
     };
     const showEffervescence = (type) => { const t = (type || "").toLowerCase(); return t.includes("bollicin") || t.includes("spumante") || t.includes("champagne") || t.includes("prosecco") || t.includes("franciacorta") || t.includes("trento"); };
@@ -343,7 +346,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         setIsAiLoading(true);
         try {
             const prompt = `Piatto: "${item.food}". Richiesta: ${reqString}. Restituisci JSON Array: [{"name": "Vino", "type": "Rosso/Bianco", "reason": "Motivo"}]`;
-            const data = await callGemini(apiKey, prompt, null);
+            const data = await callGemini(apiKey, prompt, null); // No image for pairing for simplicity
             setPairingSuggestions(Array.isArray(data) ? data : (data.suggestions || []));
         } catch (e) { alert(e.message); } finally { setIsAiLoading(false); }
     };
@@ -352,6 +355,8 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const currentGrapeTotal = (item.grapes || []).reduce((acc, g) => acc + parseInt(g.perc || 0), 0);
     const addGrape = () => { if (!tempGrape || !tempPerc) return; setItem(prev => ({ ...prev, grapes: [...(prev.grapes || []), { name: tempGrape, perc: parseInt(tempPerc) }] })); setTempGrape(""); setTempPerc(""); };
     const removeGrape = (idx) => setItem(prev => ({ ...prev, grapes: prev.grapes.filter((_, i) => i !== idx) }));
+    
+    // GALLERIA FOTO
     const handlePhotoAdd = async (e) => { 
         const files = Array.from(e.target.files);
         for (const f of files) {
@@ -360,10 +365,11 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         }
     };
     const removePhoto = (idx) => setItem(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }));
+
     const addItem = () => { if(session.mode === 'Acquisto') onSave({ ...session, items: [item] }); else { setSession(prev => ({ ...prev, items: [...prev.items, item] })); setItem({}); setStep('context'); } };
     
     const CounterBtn = ({ type, label }) => (
-        <div className="flex flex-col items-center bg-gray-50 dark:bg-slate-800 p-2 rounded-xl border border-gray-100 dark:border-slate-700 min-w-[70px] flex-shrink-0">
+        <div className="flex flex-col items-center bg-gray-50 dark:bg-slate-800 p-2 rounded-xl border border-gray-100 dark:border-slate-700">
             <span className="text-[9px] font-bold uppercase text-gray-400 mb-1">{label}</span>
             <div className="flex items-center gap-2">
                 <button onClick={() => updateCount(type, -1)} className="w-6 h-6 bg-white dark:bg-slate-700 rounded-full shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-200 active:scale-90"><Icons.Minus size={12}/></button>
@@ -397,14 +403,17 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         <div className="space-y-4 animate-in slide-in-from-right-8 fade-in pb-20">
             <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-lg dark:text-white">{session.mode === 'Acquisto' ? 'Nuova Bottiglia' : 'Nuovo Inserimento'}</h3></div>
             
+            {/* CIBO & SOMMELIER ACCORDION */}
             {session.mode !== 'Degustazione' && session.mode !== 'Acquisto' && (
                 <Card className="bg-orange-50/50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/30">
                     <div className="mb-3"><Input label="Piatto" placeholder="Es. Carbonara" value={item.food || ''} onChange={e => setItem({...item, food: e.target.value})} /></div>
+                    
                     <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
                         <div onClick={() => setSommOpen(!sommOpen)} className="flex justify-between items-center cursor-pointer">
                             <label className="text-[10px] font-bold text-orange-400 uppercase block cursor-pointer">Sommelier consiglia:</label>
                             {sommOpen ? <Icons.ChevronDown size={16} className="text-orange-400"/> : <Icons.ChevronRight size={16} className="text-orange-400"/>}
                         </div>
+                        
                         {sommOpen && (
                             <div className="mt-3 animate-in slide-in-from-top-2">
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2 border-b border-gray-100 dark:border-slate-800 pb-2">
@@ -421,11 +430,14 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 </Card>
             )}
 
+            {/* VINO */}
             <Card className="border-l-4 border-l-indigo-500 dark:border-l-indigo-400">
                 <div className="flex gap-2 items-end mb-4">
                     <div className="flex-1"><Input label="Etichetta / Nome" value={item.wine || ''} onChange={e => setItem({...item, wine: e.target.value})} /></div>
                     <button onClick={handleWineFill} disabled={isAiLoading} className="mb-3 p-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl shadow-lg shadow-purple-200 disabled:opacity-50">{isAiLoading ? <Icons.Loader2 size={20} className="animate-spin"/> : <Icons.Sparkles size={20}/>}</button>
                 </div>
+
+                {/* GALLERY */}
                 <div className="mb-4">
                     <label className="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wide dark:text-gray-500">Galleria Foto</label>
                     <div className="flex gap-2 overflow-x-auto pb-2">
@@ -440,13 +452,20 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                         ))}
                     </div>
                 </div>
+
                 <div className="flex gap-2"><Input label="Produttore" value={item.prod || ''} onChange={e => setItem({...item, prod: e.target.value})} /><div className="w-24"><Input label="Anno" type="number" value={item.year || ''} onChange={e => setItem({...item, year: e.target.value})} /></div></div>
                 <div className="flex gap-2">
                     <div className="w-1/2"><Input label="Tipologia" placeholder="Rosso..." value={item.type || ''} onChange={e => setItem({...item, type: e.target.value})} /></div>
                     <div className="w-1/2"><Input label="Metodo" placeholder="Classico..." value={item.method || ''} onChange={e => setItem({...item, method: e.target.value})} /></div>
                 </div>
+                
+                {/* Uvaggio */}
                 <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-200 dark:border-slate-700 mb-3"><label className="flex justify-between text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wide"><span>Uvaggio</span> <span className={currentGrapeTotal === 100 ? "text-emerald-500" : "text-orange-500"}>{currentGrapeTotal}%</span></label><div className="flex flex-wrap gap-2 mb-2">{(item.grapes || []).map((g, i) => (<div key={i} className="flex items-center gap-1 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 px-2 py-1 rounded-lg text-xs font-bold shadow-sm"><span className="text-indigo-600 dark:text-indigo-400">{g.perc}%</span> <span className="dark:text-gray-300">{g.name}</span> <button onClick={() => removeGrape(i)} className="text-red-400 ml-1">×</button></div>))}</div>{currentGrapeTotal < 100 && (<div className="flex gap-2 items-center"><input className="flex-1 p-2 text-sm border rounded-lg bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Vitigno" value={tempGrape} onChange={e => setTempGrape(e.target.value)} /><input className="w-16 p-2 text-sm border rounded-lg text-center bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="%" type="number" value={tempPerc} onChange={e => setTempPerc(e.target.value)} /><button onClick={addGrape} className="bg-slate-800 dark:bg-indigo-600 text-white p-2 rounded-lg font-bold">+</button></div>)}</div>
+                
+                {/* Dati Tecnici */}
                 <div className="flex gap-2"><Input label="Alcol %" type="number" value={item.alcohol || ''} onChange={e => setItem({...item, alcohol: e.target.value})} /><Input label="Prezzo €" type="number" value={item.price || ''} onChange={e => setItem({...item, price: e.target.value})} /></div>
+                
+                {/* 📅 DRINK WINDOW */}
                 <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-200 dark:border-slate-700 mb-3">
                     <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide flex items-center gap-1"><Icons.Clock size={10}/> Finestra Consumo</label>
                     <div className="flex gap-2 items-center">
@@ -456,8 +475,22 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                         <input type="number" className="w-16 p-2 text-sm border rounded-lg text-center bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="2030" value={item.drinkTo || ''} onChange={e => setItem({...item, drinkTo: e.target.value})} />
                     </div>
                 </div>
-                {(session.mode === 'Acquisto' || item.buyPlace) && (<div className="grid grid-cols-2 gap-2"><Input label="Dove l'hai preso?" placeholder="Enoteca..." value={item.buyPlace || ''} onChange={e => setItem({...item, buyPlace: e.target.value})} /><Input label="Posizione Cantina" placeholder="Scaffale A..." value={item.location || ''} onChange={e => setItem({...item, location: e.target.value})} /></div>)}
-                {session.mode === 'Acquisto' && (<div onClick={() => setItem({...item, isWishlist: !item.isWishlist})} className={`p-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer mb-3 ${item.isWishlist ? 'bg-pink-50 border-pink-200 text-pink-600 dark:bg-pink-900/20 dark:text-pink-300' : 'bg-gray-50 border-gray-200 text-gray-500 dark:bg-slate-800 dark:border-slate-700'}`}><Icons.Heart size={18} fill={item.isWishlist ? "currentColor" : "none"} /><span className="text-sm font-bold">{item.isWishlist ? "Nella Lista Desideri" : "Aggiungi ai Desideri"}</span></div>)}
+                
+                {/* 📍 LOCATION */}
+                {(session.mode === 'Acquisto' || item.buyPlace) && (
+                    <div className="grid grid-cols-2 gap-2">
+                        <Input label="Dove l'hai preso?" placeholder="Enoteca..." value={item.buyPlace || ''} onChange={e => setItem({...item, buyPlace: e.target.value})} />
+                        <Input label="Posizione Cantina" placeholder="Scaffale A..." value={item.location || ''} onChange={e => setItem({...item, location: e.target.value})} />
+                    </div>
+                )}
+                
+                {/* ❤️ WISHLIST TOGGLE */}
+                {session.mode === 'Acquisto' && (
+                    <div onClick={() => setItem({...item, isWishlist: !item.isWishlist})} className={`p-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer transition-colors mb-3 ${item.isWishlist ? 'bg-pink-50 border-pink-200 text-pink-600 dark:bg-pink-900/20 dark:text-pink-300' : 'bg-gray-50 border-gray-200 text-gray-500 dark:bg-slate-800 dark:border-slate-700'}`}>
+                        <Icons.Heart size={18} fill={item.isWishlist ? "currentColor" : "none"} />
+                        <span className="text-sm font-bold">{item.isWishlist ? "Nella Lista Desideri" : "Aggiungi ai Desideri"}</span>
+                    </div>
+                )}
             </Card>
 
             {session.mode !== 'Acquisto' && (
@@ -469,13 +502,14 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                     </div>
                     <button onClick={() => setAisTab(aisTab === 'pairing' ? null : 'pairing')} className={`w-full py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === 'pairing' ? 'bg-orange-100 border-orange-500 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Abbinamento Cibo-Vino</button>
 
+                    {/* CONTENUTO SCHEDA 1.0 */}
                     {aisTab === '1.0' && (
                         <div className="mt-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 animate-in slide-in-from-top-2 space-y-4">
                             <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
                                 <h4 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase mb-2 flex items-center gap-2"><Icons.Eye size={14}/> Esame Visivo</h4>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Select label="Limpidezza" options={AIS_TERMS.LIMPIDEZZA} value={item.ais?.limp || ''} onChange={e => setItem({...item, ais: {...item.ais, limp: e.target.value}})} />
-                                    <Select label="Colore" options={AIS_TERMS.COLORE_ROSSO} value={item.ais?.col || ''} onChange={e => setItem({...item, ais: {...item.ais, col: e.target.value}})} />
+                                    <Select label="Colore" options={getColorOptions(item.type)} value={item.ais?.col || ''} onChange={e => setItem({...item, ais: {...item.ais, col: e.target.value}})} />
                                 </div>
                                 <div className="mt-2"><Select label="Consistenza" options={AIS_TERMS.CONSISTENZA} value={item.ais?.cons || ''} onChange={e => setItem({...item, ais: {...item.ais, cons: e.target.value}})} /></div>
                                 {showEffervescence(item.type) && (<div className="mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-900/30"><h5 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-2">Effervescenza</h5><div className="grid grid-cols-3 gap-2"><Select label="Grana" options={AIS_TERMS.GRANA_BOL} value={item.ais?.grana || ''} onChange={e => setItem({...item, ais: {...item.ais, grana: e.target.value}})} /><Select label="Numero" options={AIS_TERMS.NUMERO_BOL} value={item.ais?.numBol || ''} onChange={e => setItem({...item, ais: {...item.ais, numBol: e.target.value}})} /><Select label="Persistenza" options={AIS_TERMS.PERS_BOL} value={item.ais?.persBol || ''} onChange={e => setItem({...item, ais: {...item.ais, persBol: e.target.value}})} /></div></div>)}
@@ -516,6 +550,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 </div>
             )}
 
+            {/* VOTI FINALI (RIPRISTINATI) */}
             {session.mode !== 'Acquisto' && (
                 <div className="grid grid-cols-2 gap-3 mt-4 mb-4">
                     <Input label="Voto Personale (0-100)" type="number" value={item.votePersonal || ''} onChange={e => setItem({...item, votePersonal: e.target.value})} />
@@ -572,6 +607,7 @@ function CellarView({ cellar, setCellar, apiKey, startSession }) {
     const handleClone = (bottle) => { setNewBot({ ...bottle, id: null, q: 1, isWishlist: false }); setAddMode(true); };
     const handleSmartFill = async () => { if(!newBot.n) return; setLoading(true); try { const prompt = `Analizza vino: "${newBot.n}". JSON STRETTO: {"prod": "Produttore", "year": "Anno", "type": "Rosso/Bianco/Bollicine/Rosato/Birra/Distillato", "drinkFrom": "2024", "drinkTo": "2030"}`; const data = await callGemini(apiKey, prompt); setNewBot(prev => ({ ...prev, p: data.prod, y: data.year, type: data.type, drinkFrom: data.drinkFrom, drinkTo: data.drinkTo })); } catch(e) { alert("Errore AI: " + e.message); } finally { setLoading(false); } };
     const openBottle = (b) => { if(confirm("Stappi questa bottiglia?")) { if (b.q > 1) setCellar(cellar.map(item => item.id === b.id ? { ...item, q: item.q - 1 } : item)); else setCellar(cellar.filter(item => item.id !== b.id)); startSession('Degustazione', { wine: b.n, prod: b.p, year: b.y, type: b.type, price: b.pr, buyPlace: b.buyPlace }); } };
+    
     const FilterBtn = ({ id, label, icon: Icon }) => (<button onClick={() => setFilter(id)} className={`px-4 py-2 rounded-full text-xs font-bold transition-all border flex items-center gap-1 whitespace-nowrap ${filter === id ? 'bg-slate-800 text-white border-slate-800 dark:bg-indigo-600 dark:border-indigo-600' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-slate-700'}`}>{Icon && <Icon size={12}/>} {label}</button>);
 
     return (
