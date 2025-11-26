@@ -48,7 +48,6 @@ const AIS_TERMS = {
     ARMONIA: ["Poco Arm.", "Abb. Arm.", "Armonico"]
 };
 
-// --- AI ENGINE ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante.");
     const MODEL = "gemini-1.5-flash"; 
@@ -77,7 +76,6 @@ const callGemini = async (apiKey, prompt, base64Image = null) => {
     } catch (error) { throw new Error(error.message); }
 };
 
-// --- UTILS ---
 const resizeImage = (file) => {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -105,7 +103,6 @@ const getItemStyle = (type) => {
     return "bg-white border-gray-100 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200";
 };
 
-// --- COMPONENTS ---
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, isLoading = false }) => {
     const styles = {
         primary: "bg-slate-900 text-white shadow-slate-300 dark:bg-indigo-600 dark:text-white dark:shadow-none",
@@ -190,7 +187,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "22.0" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "23.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -205,56 +202,65 @@ function App() {
         }; reader.readAsText(file);
     };
 
-    // LAYOUT FIXED: overflow-x-hidden sul main wrapper
+    // LAYOUT FIXED STRUTTURATO
     return (
-        <div className="bg-slate-50 dark:bg-slate-950 min-h-screen pb-24 font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300 overflow-x-hidden">
-            <div className="bg-white dark:bg-slate-900 sticky top-0 z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center shadow-sm h-16 w-full max-w-md mx-auto">
-                <div className="flex items-center gap-2">
-                    {tab !== 'home' && <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.ArrowLeft size={20}/></button>}
-                    <h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white truncate max-w-[200px]">{APP_TITLE}</h1>
+        <div className="min-h-screen bg-gray-100 dark:bg-black flex items-center justify-center font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
+            {/* CONTENITORE APP SIMIL-MOBILE */}
+            <div className="w-full max-w-md h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative shadow-2xl overflow-hidden">
+                
+                {/* HEADER */}
+                <div className="z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
+                    <div className="flex items-center gap-2">
+                        {tab !== 'home' && <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.ArrowLeft size={20}/></button>}
+                        <h1 className="text-lg font-black tracking-tight text-slate-800 dark:text-white truncate max-w-[200px]">{APP_TITLE}</h1>
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
+                            {darkMode ? <Icons.Sun size={20} /> : <Icons.Moon size={20} />}
+                        </button>
+                        <button onClick={() => setShowSettings(true)} className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.Settings size={20}/></button>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
-                        {darkMode ? <Icons.Sun size={20} /> : <Icons.Moon size={20} />}
-                    </button>
-                    <button onClick={() => setShowSettings(true)} className="p-2 text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.Settings size={20}/></button>
-                </div>
-            </div>
 
-            {showSettings && (
-                <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-                    <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2"><Icons.Sparkles size={18} className="text-indigo-500"/> Impostazioni</h3>
-                            <button onClick={() => setShowSettings(false)} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"><Icons.X size={20}/></button>
-                        </div>
-                        <Input label="Gemini API Key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIzaSy..." />
-                        <Button onClick={() => setShowSettings(false)} variant="primary">Salva</Button>
-                        <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
-                            <button onClick={exportCSV} className="w-full p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center gap-2 font-bold text-sm text-emerald-700 dark:text-emerald-400"><Icons.FileSpreadsheet size={16} /> Esporta Excel (CSV)</button>
-                            <button onClick={exportBackup} className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl flex items-center gap-2 font-bold text-sm text-slate-600 dark:text-slate-400"><Icons.DownloadCloud size={16} /> Backup Dati</button>
-                            <label className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl flex items-center gap-2 font-bold text-sm text-slate-600 dark:text-slate-400 cursor-pointer"><Icons.UploadCloud size={16} /> Ripristina<input type="file" hidden accept=".json" onChange={importBackup} /></label>
-                        </div>
-                    </Card>
-                </div>
-            )}
+                {/* IMPOSTAZIONI MODALE (ASSOLUTA) */}
+                {showSettings && (
+                    <div className="absolute inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+                        <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-lg flex items-center gap-2"><Icons.Sparkles size={18} className="text-indigo-500"/> Impostazioni</h3>
+                                <button onClick={() => setShowSettings(false)} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"><Icons.X size={20}/></button>
+                            </div>
+                            <Input label="Gemini API Key" type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="AIzaSy..." />
+                            <Button onClick={() => setShowSettings(false)} variant="primary">Salva</Button>
+                            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 space-y-2">
+                                <button onClick={exportCSV} className="w-full p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center gap-2 font-bold text-sm text-emerald-700 dark:text-emerald-400"><Icons.FileSpreadsheet size={16} /> Esporta Excel (CSV)</button>
+                                <button onClick={exportBackup} className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl flex items-center gap-2 font-bold text-sm text-slate-600 dark:text-slate-400"><Icons.DownloadCloud size={16} /> Backup Dati</button>
+                                <label className="w-full p-3 bg-gray-50 dark:bg-slate-800 rounded-xl flex items-center gap-2 font-bold text-sm text-slate-600 dark:text-slate-400 cursor-pointer"><Icons.UploadCloud size={16} /> Ripristina<input type="file" hidden accept=".json" onChange={importBackup} /></label>
+                            </div>
+                        </Card>
+                    </div>
+                )}
 
-            <main className="p-4 w-full max-w-md mx-auto flex-grow">
-                {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
-                {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
-                {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
-                {tab === 'stats' && <StatsView logs={logs} cellar={cellar} />}
-                {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={goBack} apiKey={apiKey} />}
-            </main>
+                {/* MAIN CONTENT (SCROLLABLE) */}
+                <main className="flex-1 overflow-y-auto p-4 w-full scroll-smooth">
+                    {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
+                    {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
+                    {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
+                    {tab === 'stats' && <StatsView logs={logs} cellar={cellar} />}
+                    {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={goBack} apiKey={apiKey} />}
+                    {/* SPAZIO EXTRA PER NON COPRIRE L'ULTIMO ELEMENTO COL MENU */}
+                    <div className="h-20"></div>
+                </main>
 
-            {(!session || tab !== 'session') && (
-                <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 pb-safe pt-2 flex justify-around items-center z-50 h-16 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                {/* NAVBAR (STICKY BOTTOM INSIDE CONTAINER) */}
+                <nav className="shrink-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 h-16 flex justify-around items-center z-50 w-full">
                     <NavItem icon={Icons.Home} label="Home" active={tab === 'home'} onClick={() => setTab('home')} />
                     <NavItem icon={Icons.Archive} label="Cantina" active={tab === 'cantina'} onClick={() => setTab('cantina')} />
                     <NavItem icon={Icons.Search} label="Diario" active={tab === 'history'} onClick={() => setTab('history')} />
                     <NavItem icon={Icons.BarChart3} label="Stats" active={tab === 'stats'} onClick={() => setTab('stats')} />
                 </nav>
-            )}
+
+            </div>
         </div>
     );
 }
@@ -304,7 +310,8 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [pairCounts, setPairCounts] = useState({ Rosso: 0, Bianco: 0, Bollicine: 0, Rosato: 0, Birra: 0, Spirit: 0 });
     const [pairingSuggestions, setPairingSuggestions] = useState([]);
     
-    const fileInput = useRef(null);
+    const fileInputFood = useRef(null);
+    const fileInputWine = useRef(null);
 
     const getColorOptions = (type) => {
         const t = (type || "").toLowerCase();
@@ -347,6 +354,12 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
             const data = await callGemini(apiKey, prompt, null);
             setPairingSuggestions(Array.isArray(data) ? data : (data.suggestions || []));
         } catch (e) { alert(e.message); } finally { setIsAiLoading(false); }
+    };
+
+    const toggleFlavor = (tag) => {
+        const current = item.flavorTags || [];
+        if(current.includes(tag)) setItem({...item, flavorTags: current.filter(t => t !== tag)});
+        else setItem({...item, flavorTags: [...current, tag]});
     };
 
     const updateCount = (type, delta) => setPairCounts(prev => ({ ...prev, [type]: Math.max(0, prev[type] + delta) }));
@@ -398,6 +411,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         <div className="space-y-4 animate-in slide-in-from-right-8 fade-in pb-20">
             <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-lg dark:text-white">{session.mode === 'Acquisto' ? 'Nuova Bottiglia' : 'Nuovo Inserimento'}</h3></div>
             
+            {/* CIBO & SOMMELIER ACCORDION */}
             {session.mode !== 'Degustazione' && session.mode !== 'Acquisto' && (
                 <Card className="bg-orange-50/50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/30">
                     <div className="mb-3"><Input label="Piatto" placeholder="Es. Carbonara" value={item.food || ''} onChange={e => setItem({...item, food: e.target.value})} /></div>
@@ -422,6 +436,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 </Card>
             )}
 
+            {/* VINO */}
             <Card className="border-l-4 border-l-indigo-500 dark:border-l-indigo-400">
                 <div className="flex gap-2 items-end mb-4">
                     <div className="flex-1"><Input label="Etichetta / Nome" value={item.wine || ''} onChange={e => setItem({...item, wine: e.target.value})} /></div>
@@ -461,6 +476,8 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 {session.mode === 'Acquisto' && (<div onClick={() => setItem({...item, isWishlist: !item.isWishlist})} className={`p-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer mb-3 ${item.isWishlist ? 'bg-pink-50 border-pink-200 text-pink-600 dark:bg-pink-900/20 dark:text-pink-300' : 'bg-gray-50 border-gray-200 text-gray-500 dark:bg-slate-800 dark:border-slate-700'}`}><Icons.Heart size={18} fill={item.isWishlist ? "currentColor" : "none"} /><span className="text-sm font-bold">{item.isWishlist ? "Nella Lista Desideri" : "Aggiungi ai Desideri"}</span></div>)}
             </Card>
 
+            {/* 🏷️ FLAVOR TAGS RIMOSSI COME RICHIESTO */}
+
             {session.mode !== 'Acquisto' && (
                 <div className="mt-4 mb-4">
                     <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">Schede Tecniche</label>
@@ -468,8 +485,10 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                         <button onClick={() => setAisTab(aisTab === '1.0' ? null : '1.0')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === '1.0' ? 'bg-emerald-100 border-emerald-500 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Scheda AIS 1.0</button>
                         <button onClick={() => setAisTab(aisTab === '2.0' ? null : '2.0')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === '2.0' ? 'bg-indigo-100 border-indigo-500 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Scheda AIS 2.0</button>
                     </div>
+                    
                     <button onClick={() => setAisTab(aisTab === 'pairing' ? null : 'pairing')} className={`w-full py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === 'pairing' ? 'bg-orange-100 border-orange-500 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Abbinamento Cibo-Vino</button>
 
+                    {/* CONTENUTO SCHEDA 1.0 */}
                     {aisTab === '1.0' && (
                         <div className="mt-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 animate-in slide-in-from-top-2 space-y-4">
                             <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
@@ -517,6 +536,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 </div>
             )}
 
+            {/* VOTI FINALI */}
             {session.mode !== 'Acquisto' && (
                 <div className="grid grid-cols-2 gap-3 mt-4 mb-4">
                     <Input label="Voto Personale (0-100)" type="number" value={item.votePersonal || ''} onChange={e => setItem({...item, votePersonal: e.target.value})} />
