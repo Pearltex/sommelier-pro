@@ -50,20 +50,6 @@ const AIS_TERMS = {
     ARMONIA: ["Poco Arm.", "Abb. Arm.", "Armonico"]
 };
 
-const MERCADINI_FOOD_CONFIG = [
-    { id: 'succulenza', label: 'Succulenza' },
-    { id: 'untuosita', label: 'Untuosità' },
-    { id: 'persistenza_cibo', label: 'Persistenza G.O.' },
-    { id: 'speziatura', label: 'Speziatura' },
-    { id: 'aromaticita', label: 'Aromaticità' },
-    { id: 'sapidita_cibo', label: 'Sapidità' },
-    { id: 'amaro', label: 'T. Amarognola' },
-    { id: 'acido', label: 'T. Acida' },
-    { id: 'dolcezza_cibo', label: 'Dolcezza' },
-    { id: 'grassezza', label: 'Grassezza' },
-    { id: 't_dolce', label: 'T. Dolce' }
-];
-
 // --- AI ENGINE ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante.");
@@ -137,125 +123,198 @@ const Input = ({ label, ...props }) => ( <div className="mb-3 w-full"> {label &&
 const Select = ({ label, options, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props}> <option value="">-- Seleziona --</option> {options.map(o => <option key={o} value={o}>{o}</option>)} </select> </div> );
 const Card = ({ children, className = '', onClick }) => ( <div onClick={onClick} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800 w-full ${className} ${onClick ? 'cursor-pointer active:bg-gray-50 dark:active:bg-slate-800' : ''}`}>{children}</div> );
 
-// --- COMPONENTI SPECIALI MERCADINI ---
+// --- GRAFICO MERCADINI REALE ---
+const PairingGraphReal = ({ values, onChange, showEffervescence, showTannins }) => {
+    const size = 360;
+    const center = size / 2;
+    const radius = 130;
 
-// Input con risoluzione ambiguità (4 e 7)
-const AmbiguousInput = ({ label, value, onChange, labels, textValue }) => {
-    const val = parseInt(value) || 0;
-    let statusText = textValue || ""; // Usa il testo salvato se c'è, altrimenti calcola
-    let needsClarification = false;
+    // Angoli dei gruppi (Y Invertita per Vino, Divergenti per Cibo)
+    // 0 = Ore 12 (Alto), 90 = Ore 3 (Dx), 180 = Ore 6 (Basso), 270 = Ore 9 (Sx)
+    // VINO: Parallele Alto (0°), Parallele Dx (120°), Parallele Sx (240°)
+    // CIBO: Opposti (Divergenti) -> 180°, 300°, 60°
     
-    if (!textValue) {
-        if (val > 0 && val < 4) statusText = labels[0];
-        else if (val > 4 && val < 7) statusText = labels[1];
-        else if (val > 7) statusText = labels[2];
-        else if (val === 4 || val === 7) needsClarification = true;
-    }
+    const GROUPS = [
+        // --- VINO: ALTO (Parallele) ---
+        { 
+            type: 'wine', angle: -5, labelPos: 'right', align: 'start',
+            items: [{id: 'intensita', l: 'Intensità G.O.'}, {id: 'pai', l: 'PAI'}] 
+        },
+        { 
+            type: 'wine', angle: 5, labelPos: 'left', align: 'end',
+            items: [{id: 'dolcezza_vino', l: 'Dolcezza'}, {id: 'morbidezza', l: 'Morbidezza'}] 
+        },
 
-    // Reset text if value changes to non-ambiguous
-    useEffect(() => {
-        if (val !== 4 && val !== 7 && textValue) onChange(val, null);
-    }, [val]);
+        // --- VINO: BASSO DESTRA (Parallele) ---
+        { 
+            type: 'wine', angle: 115, labelPos: 'right', align: 'start',
+            items: [
+                {id: 'acidita', l: 'Acidità'}, 
+                ...(showEffervescence ? [{id: 'effervescenza', l: 'Effervescenza'}] : []),
+                {id: 'sapidita_vino', l: 'Sapidità'}
+            ] 
+        },
+
+        // --- VINO: BASSO SINISTRA (Parallele) ---
+        { 
+            type: 'wine', angle: 245, labelPos: 'left', align: 'end',
+            items: [{id: 'alcol', l: 'Alcolicità'}, ...(showTannins ? [{id: 'tannicita', l: 'Tannicità'}] : [])] 
+        },
+
+        // --- CIBO: OPPOSIZIONE ALTO (Basso) ---
+        { 
+            type: 'food', angle: 175, labelPos: 'left', align: 'end',
+            items: [{id: 'persistenza_cibo', l: 'Persistenza'}, {id: 'speziatura', l: 'Speziatura'}, {id: 'aromaticita', l: 'Aromaticità'}] 
+        },
+        { 
+            type: 'food', angle: 185, labelPos: 'right', align: 'start',
+            items: [{id: 'sapidita_cibo', l: 'Sapidità'}, {id: 'amaro', l: 'T. Amarognola'}, {id: 'acido', l: 'T. Acida'}, {id: 'dolcezza_cibo', l: 'Dolcezza'}] 
+        },
+
+        // --- CIBO: OPPOSIZIONE DX (Alto Sx) ---
+        { 
+            type: 'food', angle: 300, labelPos: 'right', align: 'end',
+            items: [{id: 't_dolce', l: 'T. Dolce'}, {id: 'grassezza', l: 'Grassezza'}] 
+        },
+
+        // --- CIBO: OPPOSIZIONE SX (Alto Dx) ---
+        { 
+            type: 'food', angle: 60, labelPos: 'left', align: 'start',
+            items: [{id: 'succulenza', l: 'Succulenza'}, {id: 'untuosita', l: 'Untuosità'}] 
+        },
+    ];
+
+    const getPolyPoints = (targetType) => {
+        let points = [];
+        // Ordiniamo i gruppi per angolo per disegnare il poligono ordinatamente
+        const sortedGroups = GROUPS.filter(g => g.type === targetType).sort((a, b) => a.angle - b.angle);
+        
+        sortedGroups.forEach(group => {
+            // Per ogni gruppo, prendiamo il valore MASSIMO inserito per disegnare il vertice
+            // (Logica: se un vino è molto acido E molto sapido, il poligono si estende fino al massimo)
+            const maxVal = Math.max(0, ...group.items.map(i => values[i.id] || 0));
+            const rad = (group.angle - 90) * (Math.PI / 180);
+            const r = (maxVal / 10) * radius;
+            const x = center + r * Math.cos(rad);
+            const y = center + r * Math.sin(rad);
+            points.push(`${x},${y}`);
+        });
+        return points.join(" ");
+    };
 
     return (
-        <div className="mb-4 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700">
-            <div className="flex justify-between items-end mb-2">
-                <label className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">{label}</label>
-                <span className="text-lg font-black text-slate-800 dark:text-white">{val}</span>
-            </div>
-            
-            <input 
-                type="range" 
-                min="0" max="10" step="1" 
-                className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-indigo-600 dark:accent-indigo-400"
-                value={val} 
-                onChange={(e) => onChange(e.target.value, null)} 
-            />
-
-            <div className="mt-2 h-8">
-                {(statusText) && (
-                    <div className="text-center text-xs font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/30 py-1 rounded">{statusText}</div>
-                )}
+        <div id="printable-graph" className="relative w-full bg-white p-2 rounded-xl overflow-visible select-none print:p-0">
+            <div className="relative h-[480px] w-full">
                 
-                {needsClarification && !statusText && (
-                    <div className="flex gap-1 animate-in fade-in slide-in-from-top-1">
-                        <button 
-                            onClick={() => onChange(val, labels[val === 4 ? 0 : 1])}
-                            className="flex-1 py-1 text-[10px] font-bold bg-white border border-indigo-200 rounded text-indigo-600 hover:bg-indigo-50"
+                {/* QUADRATINI DI INPUT */}
+                {GROUPS.map((group, gIdx) => {
+                    const rad = (group.angle - 90) * (Math.PI / 180);
+                    // Posizione base alla fine del raggio (livello 10)
+                    const baseX = center + radius * Math.cos(rad);
+                    const baseY = center + radius * Math.sin(rad);
+                    
+                    // Calcolo offset per impilare i quadratini
+                    // Se angolo è in alto (es 0), impiliamo in Y. Se di lato, in X o misto.
+                    // Semplifichiamo: spostiamo il blocco input leggermente fuori
+                    const offsetX = Math.cos(rad) * 20;
+                    const offsetY = Math.sin(rad) * 20;
+
+                    return (
+                        <div key={gIdx} 
+                             className="absolute z-20 flex flex-col gap-1"
+                             style={{ 
+                                 left: baseX + offsetX, 
+                                 top: baseY + offsetY,
+                                 transform: `translate(${group.align === 'end' ? '-100%' : '0'}, ${group.angle > 90 && group.angle < 270 ? '0' : '-50%'})`,
+                                 alignItems: group.align === 'end' ? 'flex-end' : 'flex-start'
+                             }}
                         >
-                            {labels[val === 4 ? 0 : 1]}
-                        </button>
-                        <button 
-                            onClick={() => onChange(val, labels[val === 4 ? 1 : 2])}
-                            className="flex-1 py-1 text-[10px] font-bold bg-white border border-indigo-200 rounded text-indigo-600 hover:bg-indigo-50"
-                        >
-                            {labels[val === 4 ? 1 : 2]}
-                        </button>
-                    </div>
-                )}
+                            {group.items.map((item) => (
+                                <div key={item.id} className={`flex items-center gap-1 ${group.align === 'end' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                    <span className={`text-[9px] font-bold uppercase whitespace-nowrap ${group.type === 'food' ? 'text-orange-600' : 'text-indigo-600'}`}>
+                                        {item.l}
+                                    </span>
+                                    <input 
+                                        type="number" 
+                                        min="0" max="10" 
+                                        className={`w-7 h-6 text-center text-xs font-bold border-2 rounded focus:outline-none ${group.type === 'food' ? 'border-orange-300 text-orange-800' : 'border-indigo-300 text-indigo-800'}`}
+                                        value={values[item.id] || ''}
+                                        onChange={(e) => {
+                                            const val = parseInt(e.target.value);
+                                            if (!isNaN(val) && val >= 0 && val <= 10) onChange(item.id, val);
+                                            else if (e.target.value === '') onChange(item.id, 0);
+                                        }}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    );
+                })}
+
+                {/* SVG LAYER */}
+                <svg width="100%" height="100%" viewBox={`0 0 ${size} ${size}`} className="absolute inset-0 pointer-events-none z-10 overflow-visible">
+                    {/* Cerchi Concentrici */}
+                    {Array.from({length: 10}).map((_, i) => (
+                        <circle key={i} cx={center} cy={center} r={radius * ((i+1)/10)} fill="none" stroke="#cbd5e1" strokeWidth="0.5" />
+                    ))}
+                    
+                    {/* Raggi (Assi) */}
+                    {GROUPS.map((g, i) => {
+                        const rad = (g.angle - 90) * (Math.PI / 180);
+                        return (
+                            <line key={i} 
+                                x1={center} y1={center} 
+                                x2={center + radius * Math.cos(rad)} 
+                                y2={center + radius * Math.sin(rad)} 
+                                stroke={g.type === 'food' ? '#fdba74' : '#a5b4fc'} 
+                                strokeWidth="1.5" 
+                            />
+                        );
+                    })}
+                    
+                    {/* Poligoni */}
+                    <polygon points={getPolyPoints('food')} fill="rgba(249, 115, 22, 0.4)" stroke="#ea580c" strokeWidth="2" />
+                    <polygon points={getPolyPoints('wine')} fill="rgba(99, 102, 241, 0.4)" stroke="#4f46e5" strokeWidth="2" />
+                </svg>
             </div>
         </div>
     );
 };
 
-const PairingGraph = ({ foodValues, wineValues, activeFoodParams, activeWineParams, foodName, wineName }) => {
-    const size = 340;
-    const center = size / 2;
-    const radius = 120;
-    const numPoints = Math.max(activeFoodParams.length, activeWineParams.length);
-    const angleStep = (Math.PI * 2) / numPoints;
+const MercadiniEvaluation = ({ label, value, onChange, labels }) => {
+    const val = parseInt(value) || 0;
+    let text = "";
+    let showSelect = false;
 
-    const getCoordinates = (values, params) => {
-        if (!params || params.length === 0) return "";
-        return params.map((p, i) => {
-            const val = values[p.id] || 0;
-            const angle = i * angleStep - Math.PI / 2; 
-            const r = (val / 10) * radius;
-            const x = center + r * Math.cos(angle);
-            const y = center + r * Math.sin(angle);
-            return `${x},${y}`;
-        }).join(" ");
-    };
-
-    const foodCoords = getCoordinates(foodValues, activeFoodParams);
-    const wineCoords = getCoordinates(wineValues, activeWineParams);
-
-    const circles = Array.from({ length: 10 }).map((_, i) => (
-        <circle key={i} cx={center} cy={center} r={radius * ((i + 1) / 10)} fill="none" stroke="#e2e8f0" strokeWidth="1" />
-    ));
-
-    const axes = Array.from({ length: numPoints }).map((_, i) => {
-        const angle = i * angleStep - Math.PI / 2;
-        const x2 = center + radius * Math.cos(angle);
-        const y2 = center + radius * Math.sin(angle);
-        return <line key={i} x1={center} y1={center} x2={x2} y2={y2} stroke="#cbd5e1" strokeWidth="1" />;
-    });
+    if (val === 4 || val === 7) showSelect = true;
+    else if (val > 0 && val < 4) text = labels[0];
+    else if (val > 4 && val < 7) text = labels[1];
+    else if (val > 7) text = labels[2];
 
     return (
-        <div id="printable-graph" className="relative w-full bg-white p-4 border border-gray-200 rounded-xl print:border-none print:w-full print:h-full">
-            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2 print:mb-8">
-                <div className="text-left w-1/2 pr-2 border-r border-gray-100">
-                    <span className="text-[10px] text-orange-500 font-bold uppercase block">Cibo</span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xl">{foodName || "Piatto"}</span>
-                </div>
-                <div className="text-right w-1/2 pl-2">
-                    <span className="text-[10px] text-indigo-500 font-bold uppercase block">Vino</span>
-                    <span className="font-bold text-slate-800 text-sm print:text-xl">{wineName || "Vino"}</span>
-                </div>
+        <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 border border-gray-200 dark:border-slate-700 rounded-xl mb-2">
+            <div className="w-1/3 text-xs font-bold uppercase text-slate-500">{label}</div>
+            <div className="w-1/3 flex justify-center">
+                <input 
+                    type="number" min="0" max="10" 
+                    className="w-10 h-10 text-center font-black text-lg border-2 border-slate-200 rounded-lg focus:border-indigo-500 outline-none dark:bg-slate-800 dark:text-white"
+                    value={val} 
+                    onChange={(e) => {
+                        const v = parseInt(e.target.value);
+                        if(!isNaN(v) && v >=0 && v<=10) onChange(v, null);
+                    }}
+                />
             </div>
-
-            <div className="flex justify-center">
-                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-                    {circles}
-                    {axes}
-                    <polygon points={foodCoords} fill="rgba(249, 115, 22, 0.3)" stroke="#f97316" strokeWidth="2" />
-                    <polygon points={wineCoords} fill="rgba(139, 92, 246, 0.3)" stroke="#8b5cf6" strokeWidth="2" />
-                </svg>
-            </div>
-            
-            <div className="flex justify-center gap-4 mt-2 text-[10px]">
-                <div className="flex items-center gap-1"><span className="w-3 h-3 bg-orange-500/30 border border-orange-500"></span> Cibo</div>
-                <div className="flex items-center gap-1"><span className="w-3 h-3 bg-indigo-500/30 border border-indigo-500"></span> Vino</div>
+            <div className="w-1/3 flex justify-end">
+                {showSelect ? (
+                    <select className="text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 rounded p-1" onChange={(e) => onChange(val, e.target.value)}>
+                        <option value="">Scegli...</option>
+                        <option value={labels[val===4?0:1]}>{labels[val===4?0:1]}</option>
+                        <option value={labels[val===4?1:2]}>{labels[val===4?1:2]}</option>
+                    </select>
+                ) : (
+                    <span className="text-[10px] font-bold text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded">{text}</span>
+                )}
             </div>
         </div>
     );
@@ -330,7 +389,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "29.0" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "30.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -353,7 +412,9 @@ function App() {
                 @media print {
                     body * { visibility: hidden; }
                     #printable-graph, #printable-graph * { visibility: visible; }
-                    #printable-graph { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; border: none; }
+                    #printable-graph { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 20px; border: none; transform: scale(1); background: white !important; color: black !important; }
+                    #printable-graph input { border: 1px solid black !important; color: black !important; background: transparent !important; }
+                    #printable-graph svg { overflow: visible; }
                 }
             `}</style>
 
@@ -373,7 +434,7 @@ function App() {
                     </div>
                 </div>
 
-                {/* IMPOSTAZIONI */}
+                {/* IMPOSTAZIONI MODALE */}
                 {showSettings && (
                     <div className="absolute inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
                         <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl border border-gray-200 dark:border-slate-700">
@@ -463,9 +524,11 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [pairingSuggestions, setPairingSuggestions] = useState([]);
     
     // GRAFICO MERCADINI STATE
-    const [pairingValuesFood, setPairingValuesFood] = useState({});
-    const [pairingValuesWine, setPairingValuesWine] = useState({});
+    const [pairingValues, setPairingValues] = useState({});
     
+    // STATO AMBIGUITA' STRUTTURA
+    // structure/body/harmony value is stored in item state
+
     const fileInput = useRef(null);
 
     const getColorOptions = (type) => {
@@ -530,9 +593,9 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
 
     // EXPORT EXCEL PAIRING
     const handleExportPairing = () => {
-        let csv = "\uFEFFParametro,Valore Cibo,Valore Vino\n";
-        MERCADINI_FOOD_CONFIG.forEach((p, i) => {
-            csv += `${p.label},${pairingValuesFood[p.id] || 0},${0}\n`; 
+        let csv = "\uFEFFParametro,Valore\n";
+        Object.entries(pairingValues).forEach(([key, val]) => {
+             csv += `${key},${val}\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
@@ -540,27 +603,6 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         link.download = `abbinamento_${item.food || 'cibo'}_${item.wine || 'vino'}.csv`;
         link.click();
     };
-
-    // COSTRUTTORE PARAMETRI VINO DINAMICO (Basato su tipo)
-    const getWineParams = () => {
-        const t = (item.type || "").toLowerCase();
-        let params = [
-            { id: 'intensita', label: 'Intensità G.O.' },
-            { id: 'pai', label: 'P.A.I.' },
-            { id: 'acidita', label: 'Acidità' }
-        ];
-        if (showEffervescence(t)) params.push({ id: 'effervescenza', label: 'Effervescenza' });
-        params.push({ id: 'sapidita_vino', label: 'Sapidità' });
-        if (showTannins(t)) params.push({ id: 'tannicita', label: 'Tannicità' });
-        params.push(
-            { id: 'alcol', label: 'Alcolicità' },
-            { id: 'dolcezza_vino', label: 'Dolcezza' },
-            { id: 'morbidezza', label: 'Morbidezza' }
-        );
-        return params;
-    };
-
-    const wineParams = getWineParams();
 
     const CounterBtn = ({ type, label }) => (
         <div className="flex flex-col items-center bg-gray-50 dark:bg-slate-800 p-2 rounded-xl border border-gray-100 dark:border-slate-700 min-w-[70px] flex-shrink-0">
@@ -721,53 +763,35 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                     {aisTab === 'pairing' && (
                         <div className="mt-3 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-100 dark:border-orange-800 animate-in slide-in-from-top-2 space-y-4">
                             <h4 className="text-center font-bold text-orange-600 dark:text-orange-300 mb-2">Grafico di Abbinamento</h4>
-                            <PairingGraph foodValues={pairingValuesFood} wineValues={pairingValuesWine} activeFoodParams={MERCADINI_FOOD_CONFIG} activeWineParams={wineParams} foodName={item.food} wineName={item.wine} />
-                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-200 dark:border-slate-700">
-                                <h5 className="text-xs font-bold text-orange-500 uppercase mb-2 text-center">Analisi Cibo (0-10)</h5>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {MERCADINI_FOOD_CONFIG.map(p => (
-                                        <div key={p.id}>
-                                            <label className="block text-[9px] font-bold text-gray-400 mb-1">{p.label}</label>
-                                            <input type="number" min="0" max="10" className="w-full p-1 text-center border rounded dark:bg-slate-800 dark:text-white" value={pairingValuesFood[p.id] || ''} onChange={e => setPairingValuesFood({...pairingValuesFood, [p.id]: parseInt(e.target.value)})} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-200 dark:border-slate-700">
-                                <h5 className="text-xs font-bold text-indigo-500 uppercase mb-2 text-center">Analisi Vino (0-10)</h5>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {wineParams.map((p, i) => (
-                                        <div key={i}>
-                                            <label className="block text-[9px] font-bold text-gray-400 mb-1">{p.label}</label>
-                                            <input type="number" min="0" max="10" className="w-full p-1 text-center border rounded dark:bg-slate-800 dark:text-white" value={pairingValuesWine[p.id] || ''} onChange={e => setPairingValuesWine({...pairingValuesWine, [p.id]: parseInt(e.target.value)})} />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <PairingGraphReal 
+                                values={pairingValues} 
+                                onChange={(k,v) => setPairingValues({...pairingValues, [k]: v})} 
+                                foodName={item.food} 
+                                wineName={item.wine} 
+                                showEffervescence={showEffervescence(item.type)}
+                                showTannins={showTannins(item.type)}
+                            />
                             
                             {/* STRUTTURA E ARMONIA CON DROPDOWN PER 4/7 */}
                             <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-200 dark:border-slate-700 mt-3 space-y-3">
                                 <h5 className="text-xs font-bold text-slate-500 uppercase text-center">Valutazioni Finali</h5>
-                                <AmbiguousInput 
+                                <MercadiniEvaluation 
                                     label="Struttura Cibo" 
                                     value={item.mercadini_structure_food} 
                                     labels={["Poco Strutturato", "Abb. Strutturato", "Strutturato"]}
-                                    textValue={item.mercadini_structure_food_text}
-                                    onChange={(v, t) => setItem(prev => ({ ...prev, mercadini_structure_food: v, mercadini_structure_food_text: t }))} 
+                                    onChange={(v, t) => setItem(prev => ({ ...prev, mercadini_structure_food: v }))} 
                                 />
-                                <AmbiguousInput 
+                                <MercadiniEvaluation 
                                     label="Corpo Vino" 
                                     value={item.mercadini_body_wine} 
                                     labels={["Debole", "Di Corpo", "Robusto"]}
-                                    textValue={item.mercadini_body_wine_text}
-                                    onChange={(v, t) => setItem(prev => ({ ...prev, mercadini_body_wine: v, mercadini_body_wine_text: t }))} 
+                                    onChange={(v, t) => setItem(prev => ({ ...prev, mercadini_body_wine: v }))} 
                                 />
-                                <AmbiguousInput 
+                                <MercadiniEvaluation 
                                     label="Armonia" 
                                     value={item.mercadini_harmony} 
                                     labels={["Poco Armonico", "Abb. Armonico", "Armonico"]}
-                                    textValue={item.mercadini_harmony_text}
-                                    onChange={(v, t) => setItem(prev => ({ ...prev, mercadini_harmony: v, mercadini_harmony_text: t }))} 
+                                    onChange={(v, t) => setItem(prev => ({ ...prev, mercadini_harmony: v }))} 
                                 />
                             </div>
 
