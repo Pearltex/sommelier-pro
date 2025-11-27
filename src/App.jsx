@@ -368,7 +368,7 @@ const MercadiniEvaluation = ({ label, value, onChange, labels }) => {
 
 // --- MAIN APP ---
 function App() {
-    const [tab, setTab] = useState('tab');
+    const [tab, setTab] = useState('home');
     const [session, setSession] = useState(null); 
     const [showSettings, setShowSettings] = useState(false);
     const [darkMode, setDarkMode] = useState(() => { try { return localStorage.getItem('somm_theme') === 'dark'; } catch { return false; } });
