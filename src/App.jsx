@@ -556,7 +556,31 @@ function HomeView({ startSession, logs, cellar, setTab }) {
         </div>
     );
 }
-
+function CellarView({ startSession, logs, cellar, setcellar, setTab }) {
+    const totalSpent = logs.reduce((acc, l) => acc + (l.bill || 0), 0);
+    return (
+        <div className="space-y-6">
+            <div className="bg-slate-900 dark:bg-indigo-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-300 dark:shadow-none relative overflow-hidden">
+                <div className="relative z-10">
+                    <p className="text-slate-400 dark:text-indigo-300 text-xs font-bold uppercase tracking-widest">Investimento Totale</p>
+                    <h2 className="text-4xl font-black tracking-tight mt-1">€{totalSpent.toLocaleString()}</h2>
+                    <div className="flex gap-3 mt-4">
+                        <span onClick={() => setTab('history')} className="cursor-pointer hover:underline opacity-90 hover:opacity-100 text-xs font-bold flex items-center gap-2"><Icons.Wine size={12} className="text-pink-500"/> {logs.length} Eventi</span>
+                        <span onClick={() => setTab('cantina')} className="cursor-pointer hover:underline opacity-90 hover:opacity-100 text-xs font-bold flex items-center gap-2"><Icons.Archive size={12} className="text-emerald-500"/> {cellar.length} Bottiglie</span>
+                    </div>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+                {[{ l: "Degustazione", i: Icons.Wine, c: "bg-pink-50 text-pink-900 dark:bg-pink-900/30 dark:text-pink-200 dark:border-pink-900/50" }, { l: "Pranzo", i: Icons.Utensils, c: "bg-emerald-50 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-900/50" }, { l: "Aperitivo", i: Icons.Sun, c: "bg-orange-50 text-orange-900 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-900/50" }, { l: "Cena", i: Icons.Moon, c: "bg-indigo-50 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-200 dark:border-indigo-900/50" }].map(m => (
+                    <button key={m.l} onClick={() => startSession(m.l)} className={`${m.c} p-5 rounded-2xl flex flex-col items-center gap-2 font-bold transition-transform active:scale-95 border border-transparent hover:border-current shadow-sm dark:shadow-none`}><m.i size={28} /> <span>{m.l}</span></button>
+                ))}
+                <button onClick={() => startSession('Acquisto')} className="col-span-2 bg-slate-800 dark:bg-slate-700 text-white p-5 rounded-2xl flex flex-row items-center justify-center gap-3 font-bold transition-transform active:scale-95 shadow-lg shadow-slate-200 dark:shadow-none">
+                    <Icons.ShoppingBag size={24} /> <span>Acquisto / Cantina Rapida</span>
+                </button>
+            </div>
+        </div>
+    );
+}
 function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [step, setStep] = useState(session.step);
     const [item, setItem] = useState(session.items[0] || {});
