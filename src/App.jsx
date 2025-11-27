@@ -53,30 +53,76 @@ const AIS_TERMS = {
 // --- AI ENGINE ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante.");
-    const MODEL = "gemini-1.5-flash"; 
+    const MODEL = "gemini-1.5-flash";
+
     const parts = [{ text: prompt }];
+
+    // Aggiunta immagine se presente
     if (base64Image) {
-        const imageContent = base64Image.includes(",") ? base64Image.split(",")[1] : base64Image;
-        parts.push({ inline_data: { mime_type: "image/jpeg", data: imageContent } });
-    }
-    try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: parts }] })
+        const imageContent = base64Image.includes(",")
+            ? base64Image.split(",")[1]
+            : base64Image;
+
+        parts.push({
+            inline_data: {
+                mime_type: "image/jpeg",
+                data: imageContent
+            }
         });
+    }
+
+    try {
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": apiKey
+                },
+                body: JSON.stringify({
+                    contents: [{ parts }]
+                })
+            }
+        );
+
         const data = await response.json();
+
         if (data.error) throw new Error(data.error.message);
-        if (!data.candidates || !data.candidates[0]) throw new Error("Nessuna risposta.");
-        let text = data.candidates[0].content.parts[0].text;
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        const s = text.indexOf('{'); const e = text.lastIndexOf('}');
-        const sa = text.indexOf('['); const ea = text.lastIndexOf(']');
+
+        if (!data.candidates || !data.candidates[0])
+            throw new Error("Nessuna risposta dal modello.");
+
+        // Estrai testo
+        let text = data.candidates[0].content.parts[0].text || "";
+
+        // Pulisci eventuali blocchi ```json
+        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
+        // Cerca JSON
+        const s = text.indexOf("{");
+        const e = text.lastIndexOf("}");
+        const sa = text.indexOf("[");
+        const ea = text.lastIndexOf("]");
+
         let start = -1, end = -1;
-        if (s !== -1 && (sa === -1 || s < sa)) { start = s; end = e; } else if (sa !== -1) { start = sa; end = ea; }
-        if (start !== -1 && end !== -1) text = text.substring(start, end + 1);
-        return JSON.parse(text);
-    } catch (error) { throw new Error(error.message); }
+        if (s !== -1 && (sa === -1 || s < sa)) {
+            start = s; end = e;
+        } else if (sa !== -1) {
+            start = sa; end = ea;
+        }
+
+        if (start !== -1 && end !== -1) {
+            text = text.substring(start, end + 1);
+            return JSON.parse(text);
+        }
+
+        // Se non è JSON, restituisci puro testo
+        return text;
+
+    } catch (error) {
+        throw new Error(error.message);
+    }
 };
 
 // --- UTILS ---
