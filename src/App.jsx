@@ -53,7 +53,7 @@ const AIS_TERMS = {
 // --- AI ENGINE ---
 const callGemini = async (apiKey, prompt, base64Image = null) => {
     if (!apiKey) throw new Error("API Key mancante.");
-    const MODEL = "gemini-1.5-flash";
+    const MODEL = "gemini-2.5-flash";
 
     const parts = [{ text: prompt }];
 
