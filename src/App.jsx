@@ -560,18 +560,7 @@ function CellarView({ startSession, logs, cellar, setcellar, setTab }) {
     /*const totalSpent = logs.reduce((acc, l) => acc + (l.bill || 0), 0);*/
     return (
         <div className="space-y-6">
-            <div className="bg-slate-900 dark:bg-indigo-900 rounded-2xl p-6 text-white shadow-xl shadow-slate-300 dark:shadow-none relative overflow-hidden">
-                <div className="relative z-10">
-                    <p className="text-slate-400 dark:text-indigo-300 text-xs font-bold uppercase tracking-widest">Investimento Totale</p>
-                    <h2 className="text-4xl font-black tracking-tight mt-1"></h2>
-                    <div className="flex gap-3 mt-4">
-                        <span onClick={() => setTab('history')} className="cursor-pointer hover:underline opacity-90 hover:opacity-100 text-xs font-bold flex items-center gap-2"><Icons.Wine size={12} className="text-pink-500"/> {logs.length} Eventi</span>
-                        <span onClick={() => setTab('cantina')} className="cursor-pointer hover:underline opacity-90 hover:opacity-100 text-xs font-bold flex items-center gap-2"><Icons.Archive size={12} className="text-emerald-500"/> {cellar.length} Bottiglie</span>
-                    </div>
-                </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-            </div>
+            
         </div>
     );
 }
