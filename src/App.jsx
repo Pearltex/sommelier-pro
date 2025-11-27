@@ -502,7 +502,7 @@ function App() {
                 {/* MAIN CONTENT */}
                 <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 w-full relative scroll-smooth">
                     {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
-                    {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} setTab={setTab}/>}
+                    {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} setTab={setTab}/>}
                     {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
                     {tab === 'stats' && <StatsView logs={logs} cellar={cellar} />}
                     {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={goBack} apiKey={apiKey} />}
