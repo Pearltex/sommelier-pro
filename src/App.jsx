@@ -6,7 +6,7 @@ import {
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
   ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, 
   Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image as ImageIcon, ChevronRight, 
-  FileSpreadsheet, Printer
+  FileSpreadsheet, Printer, Info
 } from 'lucide-react';
 
 const Icons = {
@@ -16,26 +16,37 @@ const Icons = {
   Database, Settings, Sparkles, Bot, Loader2, ShoppingBag, Store, ScrollText,
   ClipboardCheck, Eye, Wind, Activity, Map, PieChart, Award, Filter, Quote, 
   Minus, Copy, Clock, Heart, ArrowUpDown, ArrowLeft, Image: ImageIcon, ChevronRight, 
-  FileSpreadsheet, Printer
+  FileSpreadsheet, Printer, Info
 };
 
 const APP_TITLE = "SOMMELIER PRO";
 
 const FLAVOR_TAGS = ["Fruttato", "Floreale", "Minerale", "Speziato", "Erbaceo", "Tostato", "Etereo", "Dolce", "Tannico", "Fresco", "Sapido", "Caldo", "Luppolato", "Maltato", "Torbatura", "Affumicato"];
 
-// --- DATABASE TERMINI AIS 1.0 (CLASSICA) ---
+// --- DATABASE TERMINI AIS COMPLETO ---
 const AIS_TERMS = {
     LIMPIDEZZA: ["Velato", "Abb. Limpido", "Limpido", "Cristallino", "Brillante"],
+    // Colori
     COLORE_ROSSO: ["Porpora", "Rubino", "Granato", "Aranciato"],
     COLORE_BIANCO: ["Verdolino", "Paglierino", "Dorato", "Ambrato"],
     COLORE_ROSATO: ["Tenue", "Cerasuolo", "Chiaretto"],
+    COLORE_ROSATO_2: ["Fiore di pesco", "Ramato", "Salmone", "Corallo", "Peonia"], // Per la 2.0
+    
     CONSISTENZA: ["Fluido", "Poco Cons.", "Abb. Cons.", "Consistente", "Viscoso"],
-    GRANA_BOL: ["Grossolane", "Abb. Fini", "Fini"],
-    NUMERO_BOL: ["Scarse", "Abb. Num.", "Numerose"],
-    PERS_BOL: ["Evanescenti", "Abb. Pers.", "Persistenti"],
+    
+    // Effervescenza Visiva Dettagliata
+    CATENELLE: ["Scarse", "Mediamente numerose", "Numerose"],
+    ASCESA: ["Lenta", "Media", "Rapida"],
+    GRANA_BOL: ["Grossolane", "Mediamente fini", "Fini"],
+    PERS_BOL: ["Evanescenti", "Mediamente persistenti", "Persistenti"],
+
+    // Olfattivo
     INTENSITA: ["Carente", "Poco Int.", "Abb. Int.", "Intenso", "Molto Int."],
     COMPLESSITA: ["Carente", "Poco Comp.", "Abb. Comp.", "Complesso", "Ampio"],
     QUALITA: ["Comune", "Poco Fine", "Abb. Fine", "Fine", "Eccellente"],
+    DESCRITTORI: ["Aromatico", "Vinoso", "Floreale", "Fruttato", "Fragrante", "Erbaceo", "Minerale", "Speziato", "Etereo", "Tostato"],
+    
+    // Gustativo
     ZUCCHERI: ["Secco", "Abboccato", "Amabile", "Dolce", "Stucchevole"],
     ALCOLI: ["Leggero", "Poco Caldo", "Abb. Caldo", "Caldo", "Alcolico"],
     POLIALCOLI: ["Spigoloso", "Poco Morbido", "Abb. Morbido", "Morbido", "Pastoso"],
@@ -47,49 +58,23 @@ const AIS_TERMS = {
     INTENSITA_GUS: ["Carente", "Poco Int.", "Abb. Int.", "Intenso", "Molto Int."],
     PERSISTENZA: ["Corto", "Poco Pers.", "Abb. Pers.", "Persistente", "Molto Pers."],
     QUALITA_GUS: ["Comune", "Poco Fine", "Abb. Fine", "Fine", "Eccellente"],
+    
+    // Effervescenza Gustativa
+    EFFERVESCENZA_GUSTO: ["Delicata", "Moderata", "Vivace", "Esuberante", "Incisiva"],
+
     EVOLUZIONE: ["Immaturo", "Giovane", "Pronto", "Maturo", "Vecchio"],
-    ARMONIA: ["Poco Arm.", "Abb. Arm.", "Armonico"]
+    ARMONIA: ["Poco Arm.", "Abb. Arm.", "Armonico"],
+    
+    // Termini specifici 2.0 (dove differiscono)
+    ROTONDITA: ["Poco morbido", "Moderatamente morbido", "Morbido", "Vellutato", "Pastoso"],
+    TANNICITA_2: ["Poco tannico", "Moderatamente tannico", "Tannico", "Tenace", "Astringente"],
+    ACIDITA_2: ["Poco fresco", "Moderatamente fresco", "Fresco", "Vibrante", "Acidula"],
+    SAPIDITA_2: ["Poco sapido", "Moderatamente sapido", "Sapido", "Saporito", "Salato"],
+    STRUTTURA_2: ["Di medio corpo", "Di corpo pieno", "Robusto"],
+    QUALITA_TOT_2: ["Accettabile", "Buono", "Distinto", "Ottimo", "Eccellente"]
 };
 
-// --- DATABASE TERMINI AIS 2.0 (NUOVA) ---
-const AIS_TERMS_2_0 = {
-    // ESAME VISIVO
-    LIMPIDEZZA: ["Velato", "Abbastanza limpido", "Limpido", "Cristallino", "Brillante"],
-    COLORE_BIANCO: ["Verdolino", "Paglierino", "Dorato", "Ambrato"],
-    COLORE_ROSATO: ["Fiore di pesco", "Ramato", "Salmone", "Corallo", "Peonia"],
-    COLORE_ROSSO: ["Amaranto", "Rubino", "Carminio", "Granato", "Aranciato", "Mogano"],
-    CONSISTENZA: ["Scorrevole", "Consistente", "Viscoso"],
-    BOL_GRANA: ["Grossolane", "Mediamente fini", "Fini"],
-    BOL_NUMERO: ["Scarse", "Mediamente numerose", "Numerose"],
-    BOL_PERS: ["Evanescenti", "Mediamente persistenti", "Persistenti"],
-
-    // ESAME OLFATTIVO
-    INTENSITA: ["Moderatamente intenso", "Intenso", "Molto intenso"],
-    COMPLESSITA: ["Moderatamente complesso", "Complesso", "Ampio"],
-    QUALITA_OLF: ["Accettabile", "Buono", "Distinto", "Ottimo", "Eccellente"],
-    DESCRITTORI: ["Aromatico", "Varietale", "Fruttato", "Floreale", "Vegetale", "Fragrante", "Speziato", "Pasticceria/Panificazione", "Empireumatico"],
-
-    // ESAME GUSTO-OLFATTIVO
-    DOLCEZZA: ["Secco", "Poco dolce", "Moderatamente dolce", "Dolce", "Molto dolce"],
-    ALCOLICITA: ["Poco caldo", "Moderatamente caldo", "Caldo", "Molto caldo", "Alcolico"],
-    ROTONDITA: ["Poco morbido", "Moderatamente morbido", "Morbido", "Vellutato", "Pastoso"], // Ex Polialcoli
-    ACIDITA: ["Poco fresco", "Moderatamente fresco", "Fresco", "Vibrante", "Acidula"],
-    TANNICITA: ["Poco tannico", "Moderatamente tannico", "Tannico", "Tenace", "Astringente"],
-    SAPIDITA: ["Poco sapido", "Moderatamente sapido", "Sapido", "Saporito", "Salato"],
-    EFFERVESCENZA_GUSTO: ["Delicata", "Moderata", "Vivace", "Esuberante", "Incisiva"], // Nuova voce specifica 2.0
-
-    INTENSITA_GUS: ["Moderatamente intenso", "Intenso", "Molto intenso"],
-    STRUTTURA: ["Di medio corpo", "Di corpo pieno", "Robusto"], // Ex Corpo
-    EQUILIBRIO: ["Poco equilibrato", "Mediamente equilibrato", "Equilibrato"],
-    PERSISTENZA: ["Moderatamente persistente", "Persistente", "Molto persistente"],
-    QUALITA_GUS: ["Accettabile", "Buono", "Distinto", "Ottimo", "Eccellente"],
-
-    // CONCLUSIONI
-    EVOLUZIONE: ["Giovane", "Pronto", "Maturo"], // Semplificato nella 2.0
-    ARMONIA: ["Poco armonico", "Mediamente armonico", "Armonico"],
-    QUALITA_COMPLESSIVA: ["Accettabile", "Buono", "Distinto", "Ottimo", "Eccellente"]
-};
-
+// --- MERCADINI CONFIG ---
 const MERCADINI_FOOD_CONFIG = [
     { id: 'succulenza', label: 'Succulenza' },
     { id: 'untuosita', label: 'Untuosità' },
@@ -155,7 +140,7 @@ const getItemStyle = (type) => {
     if (t.includes("rosso")) return "bg-red-50 border-red-100 text-red-900 dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-200";
     if (t.includes("bianco")) return "bg-yellow-50 border-yellow-200 text-yellow-900 dark:bg-yellow-900/20 dark:border-yellow-900/50 dark:text-yellow-200";
     if (t.includes("boll") || t.includes("spumante") || t.includes("champagne")) return "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-900/50 dark:text-amber-200";
-    if (t.includes("rosato") || t.includes("cerasuolo")) return "bg-pink-50 border-pink-200 text-pink-900 dark:bg-pink-900/20 dark:border-pink-900/50 dark:text-pink-200";
+    if (t.includes("rosato") || t.includes("cerasuolo") || t.includes("chiaretto")) return "bg-pink-50 border-pink-200 text-pink-900 dark:bg-pink-900/20 dark:border-pink-900/50 dark:text-pink-200";
     if (t.includes("birra")) return "bg-orange-100 border-orange-300 text-orange-900 dark:bg-orange-900/30 dark:border-orange-700 dark:text-orange-200";
     if (t.includes("spirit") || t.includes("distillato")) return "bg-slate-200 border-slate-300 text-slate-900 dark:bg-slate-700 dark:border-slate-500 dark:text-slate-200";
     return "bg-white border-gray-100 text-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200";
@@ -174,7 +159,15 @@ const Button = ({ children, onClick, variant = 'primary', className = '', icon: 
 };
 
 const Input = ({ label, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} <input className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 focus:bg-white transition-colors disabled:bg-gray-100 disabled:text-gray-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props} /> </div> );
-const Select = ({ label, options, ...props }) => ( <div className="mb-3 w-full"> {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} <select className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500" {...props}> <option value="">-- Seleziona --</option> {options.map(o => <option key={o} value={o}>{o}</option>)} </select> </div> );
+const Select = ({ label, options, customBg, ...props }) => ( 
+    <div className="mb-3 w-full"> 
+        {label && <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide dark:text-gray-500">{label}</label>} 
+        <select className={`w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-slate-800 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:border-indigo-500 ${customBg ? '' : 'bg-white'}`} style={customBg ? {backgroundColor: customBg} : {}} {...props}> 
+            <option value="">-- Seleziona --</option> 
+            {options.map(o => <option key={o} value={o}>{o}</option>)} 
+        </select> 
+    </div> 
+);
 const Card = ({ children, className = '', onClick }) => ( <div onClick={onClick} className={`bg-white p-4 rounded-2xl shadow-sm border border-gray-100 dark:bg-slate-900 dark:border-slate-800 w-full ${className} ${onClick ? 'cursor-pointer active:bg-gray-50 dark:active:bg-slate-800' : ''}`}>{children}</div> );
 
 // --- COMPONENTI SPECIALI MERCADINI ---
@@ -383,7 +376,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "31.0" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "30.0" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -412,7 +405,6 @@ function App() {
 
             <div className="w-full max-w-md h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative shadow-2xl overflow-hidden border-x border-gray-200 dark:border-slate-800">
                 
-                {/* HEADER */}
                 <div className="z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
                     <div className="flex items-center gap-2">
                         {tab !== 'home' && <button onClick={goBack} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"><Icons.ArrowLeft size={20}/></button>}
@@ -426,7 +418,6 @@ function App() {
                     </div>
                 </div>
 
-                {/* IMPOSTAZIONI MODALE */}
                 {showSettings && (
                     <div className="absolute inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
                         <Card className="w-full max-w-sm animate-in zoom-in-95 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xl border border-gray-200 dark:border-slate-700">
@@ -445,7 +436,6 @@ function App() {
                     </div>
                 )}
 
-                {/* MAIN CONTENT */}
                 <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 w-full relative scroll-smooth">
                     {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
                     {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
@@ -455,7 +445,6 @@ function App() {
                     <div className="h-6"></div>
                 </main>
 
-                {/* NAVBAR */}
                 {(!session || tab !== 'session') && (
                     <nav className="shrink-0 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 h-16 flex justify-around items-center w-full z-50">
                         <NavItem icon={Icons.Home} label="Home" active={tab === 'home'} onClick={() => setTab('home')} />
@@ -519,16 +508,21 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [pairingValuesFood, setPairingValuesFood] = useState({});
     const [pairingValuesWine, setPairingValuesWine] = useState({});
     
+    // STATO AMBIGUITA' STRUTTURA
+    // structure/body/harmony value is stored in item state
+
     const fileInput = useRef(null);
 
+    // LOGICHE DINAMICHE
     const getColorOptions = (type) => {
         const t = (type || "").toLowerCase();
-        if (t.includes("bianco") || t.includes("bollicine")) return AIS_TERMS.COLORE_BIANCO;
-        if (t.includes("rosato") || t.includes("cerasuolo")) return AIS_TERMS.COLORE_ROSATO;
+        if (t.includes("bianco") || t.includes("bollicine") || t.includes("spumante") || t.includes("champagne")) return AIS_TERMS.COLORE_BIANCO;
+        if (t.includes("rosato") || t.includes("cerasuolo") || t.includes("chiaretto")) return AIS_TERMS.COLORE_ROSATO;
+        if (t.includes("rosato") || t.includes("cerasuolo") || t.includes("chiaretto")) return AIS_TERMS.COLORE_ROSATO_2; // Per la 2.0
         return AIS_TERMS.COLORE_ROSSO; 
     };
     const showEffervescence = (type) => { const t = (type || "").toLowerCase(); return t.includes("bollicin") || t.includes("spumante") || t.includes("champagne") || t.includes("prosecco") || t.includes("franciacorta") || t.includes("trento"); };
-    const showTannins = (type) => { const t = (type || "").toLowerCase(); return t.includes("rosso"); };
+    const showTannins = (type) => { const t = (type || "").toLowerCase(); return t.includes("rosso") || t.includes("rosato") || t.includes("cerasuolo"); };
 
     const handleGeoFill = async () => {
         if (!session.locCity) return alert("Scrivi una città!");
@@ -564,12 +558,6 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         } catch (e) { alert(e.message); } finally { setIsAiLoading(false); }
     };
 
-    const toggleFlavor = (tag) => {
-        const current = item.flavorTags || [];
-        if(current.includes(tag)) setItem({...item, flavorTags: current.filter(t => t !== tag)});
-        else setItem({...item, flavorTags: [...current, tag]});
-    };
-
     const updateCount = (type, delta) => setPairCounts(prev => ({ ...prev, [type]: Math.max(0, prev[type] + delta) }));
     const currentGrapeTotal = (item.grapes || []).reduce((acc, g) => acc + parseInt(g.perc || 0), 0);
     const addGrape = () => { if (!tempGrape || !tempPerc) return; setItem(prev => ({ ...prev, grapes: [...(prev.grapes || []), { name: tempGrape, perc: parseInt(tempPerc) }] })); setTempGrape(""); setTempPerc(""); };
@@ -589,12 +577,9 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
 
     // EXPORT EXCEL PAIRING
     const handleExportPairing = () => {
-        let csv = "\uFEFFParametro,Valore Cibo,Valore Vino\n";
-        MERCADINI_FOOD_CONFIG.forEach((p, i) => {
-            // Per la parte vino, dobbiamo costruire la lista dinamica
-            // Qui semplifichiamo prendendo i primi 10 valori se disponibili
-            // In un'implementazione reale mappiamo 1:1
-            csv += `${p.label},${pairingValuesFood[p.id] || 0},${0}\n`; 
+        let csv = "\uFEFFParametro,Valore\n";
+        Object.entries(pairingValues).forEach(([key, val]) => {
+             csv += `${key},${val}\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
@@ -602,60 +587,6 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
         link.download = `abbinamento_${item.food || 'cibo'}_${item.wine || 'vino'}.csv`;
         link.click();
     };
-
-    // COSTRUTTORE PARAMETRI VINO DINAMICO (Basato su tipo) e SCHEDA AIS 2.0
-    const getWineParams = () => {
-        const t = (item.type || "").toLowerCase();
-        let params = [];
-        // LOGICA AIS 2.0
-        params = [
-            { id: 'intensita', label: 'Intensità' },
-            { id: 'comp', label: 'Complessità' },
-            { id: 'qualOlf', label: 'Qualità Olf' },
-            { id: 'dolcezza_vino', label: 'Dolcezza' },
-            { id: 'alcol', label: 'Alcolicità' },
-            { id: 'rotondita', label: 'Rotondità' },
-            { id: 'acidita', label: 'Acidità' },
-            { id: 'tannicita', label: 'Tannicità' }, // Sempre mostrato nella 2.0, magari disabilitato se bianco
-            { id: 'sapidita_vino', label: 'Sapidità' },
-            { id: 'intensita_gus', label: 'Intensità Gust' },
-            { id: 'struttura', label: 'Struttura' },
-            { id: 'equilibrio', label: 'Equilibrio' },
-            { id: 'persistenza', label: 'Persistenza' },
-            { id: 'qualita_gus', label: 'Qualità Gust' },
-            { id: 'evoluzione', label: 'Evoluzione' },
-            { id: 'armonia', label: 'Armonia' },
-            { id: 'qualita_complessiva', label: 'Qualità Comp.' }
-        ];
-        
-        // Aggiunta effervescenza solo se pertinente
-        if (showEffervescence(t)) {
-             params.splice(9, 0, { id: 'effervescenza_gusto', label: 'Effervescenza' });
-        }
-        
-        return params;
-    };
-    
-    const getWineParamsMercadini = () => {
-        const t = (item.type || "").toLowerCase();
-        let params = [
-            { id: 'intensita', label: 'Intensità G.O.' },
-            { id: 'pai', label: 'P.A.I.' },
-            { id: 'acidita', label: 'Acidità' }
-        ];
-        if (showEffervescence(t)) params.push({ id: 'effervescenza', label: 'Effervescenza' });
-        params.push({ id: 'sapidita_vino', label: 'Sapidità' });
-        if (showTannins(t)) params.push({ id: 'tannicita', label: 'Tannicità' });
-        params.push(
-            { id: 'alcol', label: 'Alcolicità' },
-            { id: 'dolcezza_vino', label: 'Dolcezza' },
-            { id: 'morbidezza', label: 'Morbidezza' }
-        );
-        return params;
-    };
-
-    const wineParamsMercadini = getWineParamsMercadini();
-    const wineParams20 = getWineParams();
 
     const CounterBtn = ({ type, label }) => (
         <div className="flex flex-col items-center bg-gray-50 dark:bg-slate-800 p-2 rounded-xl border border-gray-100 dark:border-slate-700 min-w-[70px] flex-shrink-0">
@@ -776,8 +707,8 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                                     <Select label="Limpidezza" options={AIS_TERMS.LIMPIDEZZA} value={item.ais?.limp || ''} onChange={e => setItem({...item, ais: {...item.ais, limp: e.target.value}})} />
                                     <Select label="Colore" options={getColorOptions(item.type)} value={item.ais?.col || ''} onChange={e => setItem({...item, ais: {...item.ais, col: e.target.value}})} />
                                 </div>
-                                <div className="mt-2"><Select label="Consistenza" options={AIS_TERMS.CONSISTENZA} value={item.ais?.cons || ''} onChange={e => setItem({...item, ais: {...item.ais, cons: e.target.value}})} /></div>
-                                {showEffervescence(item.type) && (<div className="mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-900/30"><h5 className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-2">Effervescenza</h5><div className="grid grid-cols-3 gap-2"><Select label="Grana" options={AIS_TERMS.GRANA_BOL} value={item.ais?.grana || ''} onChange={e => setItem({...item, ais: {...item.ais, grana: e.target.value}})} /><Select label="Numero" options={AIS_TERMS.NUMERO_BOL} value={item.ais?.numBol || ''} onChange={e => setItem({...item, ais: {...item.ais, numBol: e.target.value}})} /><Select label="Persistenza" options={AIS_TERMS.PERS_BOL} value={item.ais?.persBol || ''} onChange={e => setItem({...item, ais: {...item.ais, persBol: e.target.value}})} /></div></div>)}
+                                <div className="mt-2"><Select label="Consistenza" customBg="#763e8c" style={{color: 'white'}} options={AIS_TERMS.CONSISTENZA} value={item.ais?.cons || ''} onChange={e => setItem({...item, ais: {...item.ais, cons: e.target.value}})} /></div>
+                                {showEffervescence(item.type) && (<div className="mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-900/30 bg-[#a7cf3a] p-2 rounded"><h5 className="text-[10px] font-bold text-white uppercase mb-2">Effervescenza</h5><div className="grid grid-cols-3 gap-2"><Select customBg="#d9e8ae" label="Catenelle" options={AIS_TERMS.CATENELLE} value={item.ais?.catenelle || ''} onChange={e => setItem({...item, ais: {...item.ais, catenelle: e.target.value}})} /><Select customBg="#d9e8ae" label="Ascesa" options={AIS_TERMS.ASCESA} value={item.ais?.ascesa || ''} onChange={e => setItem({...item, ais: {...item.ais, ascesa: e.target.value}})} /><Select customBg="#d9e8ae" label="Grana" options={AIS_TERMS.GRANA_BOL} value={item.ais?.grana || ''} onChange={e => setItem({...item, ais: {...item.ais, grana: e.target.value}})} /><Select customBg="#d9e8ae" label="Persistenza" options={AIS_TERMS.PERS_BOL} value={item.ais?.persBol || ''} onChange={e => setItem({...item, ais: {...item.ais, persBol: e.target.value}})} /></div></div>)}
                             </div>
                             <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/30 relative border-t-4 border-t-gray-300 dark:border-t-slate-600 mt-4">
                                 <h4 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase mb-2 flex items-center gap-2"><Icons.Wind size={14}/> Esame Olfattivo</h4>
@@ -785,7 +716,8 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                                     <Select label="Intensità" options={AIS_TERMS.INTENSITA} value={item.ais?.int || ''} onChange={e => setItem({...item, ais: {...item.ais, int: e.target.value}})} />
                                     <Select label="Complessità" options={AIS_TERMS.COMPLESSITA} value={item.ais?.comp || ''} onChange={e => setItem({...item, ais: {...item.ais, comp: e.target.value}})} />
                                 </div>
-                                <div className="mt-2"><Select label="Qualità" options={AIS_TERMS.QUALITA} value={item.ais?.qualOlf || ''} onChange={e => setItem({...item, ais: {...item.ais, qualOlf: e.target.value}})} /></div>
+                                <div className="mt-2"><Select label="Qualità" customBg="#ed028b" style={{color: 'white', border: '2px solid white'}} options={AIS_TERMS.QUALITA} value={item.ais?.qualOlf || ''} onChange={e => setItem({...item, ais: {...item.ais, qualOlf: e.target.value}})} /></div>
+                                <div className="mt-2"><Select label="Descrittori" options={AIS_TERMS.DESCRITTORI} value={item.ais?.desc || ''} onChange={e => setItem({...item, ais: {...item.ais, desc: e.target.value}})} /></div>
                             </div>
                             <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/30 relative border-t-4 border-t-gray-300 dark:border-t-slate-600 mt-4">
                                 <h4 className="text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase mb-2 flex items-center gap-2"><Icons.Activity size={14}/> Esame Gusto-Olfattivo</h4>
@@ -803,7 +735,12 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                                         <Select label="Minerali" options={AIS_TERMS.MINERALI} value={item.ais?.min || ''} onChange={e => setItem({...item, ais: {...item.ais, min: e.target.value}})} />
                                     </div>
                                 </div>
-                                <div className="space-y-3 pt-2 border-t-2 border-emerald-100 dark:border-emerald-900/30">
+                                {showEffervescence(item.type) && (
+                                    <div className="mt-3 pt-2 border-t border-emerald-100 bg-[#a7cf3a] p-2 rounded">
+                                        <Select customBg="#d9e8ae" label="Effervescenza" options={AIS_TERMS.EFFERVESCENZA_GUSTO} value={item.ais?.effGusto || ''} onChange={e => setItem({...item, ais: {...item.ais, effGusto: e.target.value}})} />
+                                    </div>
+                                )}
+                                <div className="space-y-3 pt-2 border-t-2 border-emerald-100 dark:border-emerald-900/30 mt-2">
                                     <Select label="Struttura" options={AIS_TERMS.CORPO} value={item.ais?.corpo || ''} onChange={e => setItem({...item, ais: {...item.ais, corpo: e.target.value}})} />
                                     <Select label="Equilibrio" options={AIS_TERMS.EQUILIBRIO} value={item.ais?.equil || ''} onChange={e => setItem({...item, ais: {...item.ais, equil: e.target.value}})} />
                                     <Select label="Armonia" options={AIS_TERMS.ARMONIA} value={item.ais?.arm || ''} onChange={e => setItem({...item, ais: {...item.ais, arm: e.target.value}})} />
@@ -866,15 +803,17 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                                 <h4 className="text-xs font-black text-indigo-800 dark:text-indigo-400 uppercase mb-2 flex items-center gap-2"><Icons.Eye size={14}/> Esame Visivo</h4>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Select label="Limpidezza" options={AIS_TERMS_2_0.LIMPIDEZZA} value={item.ais2?.limp || ''} onChange={e => setItem({...item, ais2: {...item.ais2, limp: e.target.value}})} />
-                                    <Select label="Colore" options={AIS_TERMS_2_0.COLORE_ROSSO} value={item.ais2?.col || ''} onChange={e => setItem({...item, ais2: {...item.ais2, col: e.target.value}})} />
+                                    <Select label="Colore" options={getColorOptions(item.type)} value={item.ais2?.col || ''} onChange={e => setItem({...item, ais2: {...item.ais2, col: e.target.value}})} />
                                 </div>
-                                <div className="mt-2"><Select label="Consistenza" options={AIS_TERMS_2_0.CONSISTENZA} value={item.ais2?.cons || ''} onChange={e => setItem({...item, ais2: {...item.ais2, cons: e.target.value}})} /></div>
+                                <div className="mt-2"><Select label="Consistenza" customBg="#763e8c" style={{color: 'white'}} options={AIS_TERMS_2_0.CONSISTENZA} value={item.ais2?.cons || ''} onChange={e => setItem({...item, ais2: {...item.ais2, cons: e.target.value}})} /></div>
                                 {showEffervescence(item.type) && (
-                                    <div className="mt-2 pt-2 border-t border-indigo-100 dark:border-indigo-900/30">
+                                    <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-900/30 bg-[#a7cf3a] p-2 rounded">
+                                        <h5 className="text-[10px] font-bold text-white uppercase mb-2">Effervescenza</h5>
                                         <div className="grid grid-cols-3 gap-2">
-                                            <Select label="Grana" options={AIS_TERMS_2_0.BOL_GRANA} value={item.ais2?.grana || ''} onChange={e => setItem({...item, ais2: {...item.ais2, grana: e.target.value}})} />
-                                            <Select label="Numero" options={AIS_TERMS_2_0.BOL_NUMERO} value={item.ais2?.numBol || ''} onChange={e => setItem({...item, ais2: {...item.ais2, numBol: e.target.value}})} />
-                                            <Select label="Persistenza" options={AIS_TERMS_2_0.BOL_PERS} value={item.ais2?.persBol || ''} onChange={e => setItem({...item, ais2: {...item.ais2, persBol: e.target.value}})} />
+                                            <Select customBg="#d9e8ae" label="Catenelle" options={AIS_TERMS.CATENELLE} value={item.ais2?.catenelle || ''} onChange={e => setItem({...item, ais2: {...item.ais2, catenelle: e.target.value}})} />
+                                            <Select customBg="#d9e8ae" label="Ascesa" options={AIS_TERMS.ASCESA} value={item.ais2?.ascesa || ''} onChange={e => setItem({...item, ais2: {...item.ais2, ascesa: e.target.value}})} />
+                                            <Select customBg="#d9e8ae" label="Grana" options={AIS_TERMS_2_0.BOL_GRANA} value={item.ais2?.grana || ''} onChange={e => setItem({...item, ais2: {...item.ais2, grana: e.target.value}})} />
+                                            <Select customBg="#d9e8ae" label="Persistenza" options={AIS_TERMS_2_0.BOL_PERS} value={item.ais2?.persBol || ''} onChange={e => setItem({...item, ais2: {...item.ais2, persBol: e.target.value}})} />
                                         </div>
                                     </div>
                                 )}
@@ -885,36 +824,34 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                                 <h4 className="text-xs font-black text-indigo-800 dark:text-indigo-400 uppercase mb-2 flex items-center gap-2"><Icons.Wind size={14}/> Esame Olfattivo</h4>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Select label="Intensità" options={AIS_TERMS_2_0.INTENSITA} value={item.ais2?.int || ''} onChange={e => setItem({...item, ais2: {...item.ais2, int: e.target.value}})} />
+                                    <Select label="Descrittori" options={AIS_TERMS_2_0.DESCRITTORI} value={item.ais2?.desc || ''} onChange={e => setItem({...item, ais2: {...item.ais2, desc: e.target.value}})} />
                                     <Select label="Complessità" options={AIS_TERMS_2_0.COMPLESSITA} value={item.ais2?.comp || ''} onChange={e => setItem({...item, ais2: {...item.ais2, comp: e.target.value}})} />
                                 </div>
-                                <div className="mt-2"><Select label="Qualità" options={AIS_TERMS_2_0.QUALITA_OLF} value={item.ais2?.qualOlf || ''} onChange={e => setItem({...item, ais2: {...item.ais2, qualOlf: e.target.value}})} /></div>
-                                <div className="mt-2">
-                                    <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Descrittori</label>
-                                    <div className="flex flex-wrap gap-1">
-                                        {AIS_TERMS_2_0.DESCRITTORI.map(d => (
-                                            <span key={d} onClick={() => {
-                                                const curr = item.ais2?.desc || [];
-                                                const newDesc = curr.includes(d) ? curr.filter(x => x !== d) : [...curr, d];
-                                                setItem({...item, ais2: {...item.ais2, desc: newDesc}});
-                                            }} className={`text-[9px] px-2 py-1 rounded border cursor-pointer ${item.ais2?.desc?.includes(d) ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-500 border-gray-200'}`}>
-                                                {d}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
+                                <div className="mt-2"><Select label="Qualità" customBg="#ed028b" style={{color: 'white', border: '2px solid white'}} options={AIS_TERMS_2_0.QUALITA_OLF} value={item.ais2?.qualOlf || ''} onChange={e => setItem({...item, ais2: {...item.ais2, qualOlf: e.target.value}})} /></div>
                             </div>
 
                             {/* ESAME GUSTO-OLFATTIVO 2.0 */}
                             <div className="bg-white/50 dark:bg-slate-900/50 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
                                 <h4 className="text-xs font-black text-indigo-800 dark:text-indigo-400 uppercase mb-2 flex items-center gap-2"><Icons.Activity size={14}/> Esame Gusto-Olfattivo</h4>
-                                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                                    <Select label="Dolcezza" options={AIS_TERMS_2_0.DOLCEZZA} value={item.ais2?.dolcezza || ''} onChange={e => setItem({...item, ais2: {...item.ais2, dolcezza: e.target.value}})} />
-                                    <Select label="Alcolicità" options={AIS_TERMS_2_0.ALCOLICITA} value={item.ais2?.alcol || ''} onChange={e => setItem({...item, ais2: {...item.ais2, alcol: e.target.value}})} />
-                                    <Select label="Rotondità" options={AIS_TERMS_2_0.ROTONDITA} value={item.ais2?.rotondita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, rotondita: e.target.value}})} />
-                                    <Select label="Acidità" options={AIS_TERMS_2_0.ACIDITA} value={item.ais2?.acidita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, acidita: e.target.value}})} />
-                                    {showTannins(item.type) && <Select label="Tannicità" options={AIS_TERMS_2_0.TANNICITA} value={item.ais2?.tannicita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, tannicita: e.target.value}})} />}
-                                    <Select label="Sapidità" options={AIS_TERMS_2_0.SAPIDITA} value={item.ais2?.sapidita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, sapidita: e.target.value}})} />
+                                <div className="flex gap-4 mb-4 relative">
+                                    <div className="flex-1 space-y-2 pr-2 border-r border-gray-300 dark:border-slate-600">
+                                        <div className="text-[10px] font-bold text-orange-400 uppercase text-center border-b border-orange-200 dark:border-orange-900/50 pb-1">Morbidezze</div>
+                                        <Select label="Dolcezza" options={AIS_TERMS_2_0.DOLCEZZA} value={item.ais2?.dolcezza || ''} onChange={e => setItem({...item, ais2: {...item.ais2, dolcezza: e.target.value}})} />
+                                        <Select label="Alcolicità" options={AIS_TERMS_2_0.ALCOLICITA} value={item.ais2?.alcol || ''} onChange={e => setItem({...item, ais2: {...item.ais2, alcol: e.target.value}})} />
+                                        <Select label="Rotondità" options={AIS_TERMS_2_0.ROTONDITA} value={item.ais2?.rotondita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, rotondita: e.target.value}})} />
+                                    </div>
+                                    <div className="flex-1 space-y-2 pl-2">
+                                        <div className="text-[10px] font-bold text-blue-400 uppercase text-center border-b border-blue-200 dark:border-blue-900/50 pb-1">Durezze</div>
+                                        <Select label="Acidità" options={AIS_TERMS_2_0.ACIDITA} value={item.ais2?.acidita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, acidita: e.target.value}})} />
+                                        {showTannins(item.type) && <Select label="Tannicità" options={AIS_TERMS_2_0.TANNICITA} value={item.ais2?.tannicita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, tannicita: e.target.value}})} />}
+                                        <Select label="Sapidità" options={AIS_TERMS_2_0.SAPIDITA} value={item.ais2?.sapidita || ''} onChange={e => setItem({...item, ais2: {...item.ais2, sapidita: e.target.value}})} />
+                                    </div>
                                 </div>
+                                {showEffervescence(item.type) && (
+                                    <div className="mt-3 pt-2 border-t border-indigo-100 bg-[#a7cf3a] p-2 rounded">
+                                        <Select customBg="#d9e8ae" label="Effervescenza" options={AIS_TERMS_2_0.EFFERVESCENZA_GUSTO} value={item.ais2?.effGusto || ''} onChange={e => setItem({...item, ais2: {...item.ais2, effGusto: e.target.value}})} />
+                                    </div>
+                                )}
                                 <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-900/30 space-y-2">
                                     <Select label="Struttura" options={AIS_TERMS_2_0.STRUTTURA} value={item.ais2?.struttura || ''} onChange={e => setItem({...item, ais2: {...item.ais2, struttura: e.target.value}})} />
                                     <Select label="Equilibrio" options={AIS_TERMS_2_0.EQUILIBRIO} value={item.ais2?.equilibrio || ''} onChange={e => setItem({...item, ais2: {...item.ais2, equilibrio: e.target.value}})} />
