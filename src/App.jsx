@@ -158,29 +158,49 @@ function App() {
         setTab('session');
     };
 
+    // --- NUOVA FUNZIONE PER BERE RAPIDAMENTE ---
+    const handleQuickDrink = (bottle) => {
+        // 1. Sottrai dalla cantina
+        const updatedCellar = cellar.map(b => 
+            b.id === bottle.id ? { ...b, q: Math.max(0, b.q - 1) } : b
+        ).filter(b => b.q > 0); // Rimuove se quantità arriva a 0
+
+        // 2. Aggiungi ai log (Diario)
+        const newLog = {
+            id: Date.now(),
+            date: new Date().toISOString().split('T')[0],
+            mode: 'Consumato in Cantina',
+            locName: 'Cantina Personale',
+            locCity: '',
+            bill: bottle.price || 0,
+            locVote: '',
+            note: 'Bottiglia consumata direttamente dalla cantina.',
+            items: [{ ...bottle, q: 1, votePersonal: '' }], // Mantieni i dati del vino
+            friends: []
+        };
+
+        setCellar(updatedCellar);
+        setLogs([newLog, ...logs]);
+        alert(`Salute! 🍷 "${bottle.wine}" è stato registrato nel Diario.`);
+    };
+
     const editSession = (log) => { setSession({ ...log, step: 'context' }); setTab('session'); };
     const deleteSession = (id) => { if(confirm("Eliminare?")) setLogs(logs.filter(l => l.id !== id)); };
     
-    // --- GESTIONE SALVATAGGIO MODIFICATA ---
     const saveSession = (final) => {
         if(final.mode === 'Acquisto') {
-            const itemToSave = final.items[0]; // In modalità Acquisto c'è solo un item alla volta di solito
+            const itemToSave = final.items[0]; 
             const isWish = itemToSave.isWishlist;
-
-            // Logica per aggiornare o aggiungere
             let updatedCellar = [...cellar];
-            // Cerchiamo se esiste già l'ID
             const existingIndex = updatedCellar.findIndex(b => b.id === itemToSave.id);
 
             if (existingIndex >= 0) {
-                // MODIFICA ESISTENTE
                 updatedCellar[existingIndex] = { ...itemToSave, q: isWish ? 0 : (itemToSave.q || 1) };
                 alert("Bottiglia aggiornata! 🍷");
             } else {
-                // NUOVA BOTTIGLIA
                 const newBottle = {
                     ...itemToSave,
-                    id: Date.now() + Math.random(), // Genera ID qui se non c'è
+                    id: Date.now() + Math.random(), 
                     q: isWish ? 0 : (itemToSave.q || 1)
                 };
                 updatedCellar.push(newBottle);
@@ -193,7 +213,6 @@ function App() {
             return;
         }
 
-        // Salvataggio Log (Diario)
         const idx = logs.findIndex(l => l.id === final.id);
         if (idx >= 0) { const u = [...logs]; u[idx] = final; setLogs(u); } else { setLogs([final, ...logs]); }
         setSession(null); setTab('history');
@@ -214,7 +233,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.4" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.5" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -270,7 +289,7 @@ function App() {
                 {/* MAIN CONTENT */}
                 <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 w-full relative scroll-smooth">
                     {tab === 'home' && <HomeView startSession={startSession} logs={logs} cellar={cellar} setTab={setTab} />}
-                    {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} />}
+                    {tab === 'cantina' && <CellarView cellar={cellar} setCellar={setCellar} startSession={startSession} apiKey={apiKey} onDrink={handleQuickDrink} />}
                     {tab === 'history' && <HistoryView logs={logs} onEdit={editSession} onDelete={deleteSession} startSession={startSession} />}
                     {tab === 'stats' && <StatsView logs={logs} cellar={cellar} />}
                     {tab === 'session' && session && <SessionManager session={session} setSession={setSession} onSave={saveSession} onCancel={goBack} apiKey={apiKey} />}
@@ -504,6 +523,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                         <button onClick={() => setAisTab(aisTab === '1.0' ? null : '1.0')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === '1.0' ? 'bg-emerald-100 border-emerald-500 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Scheda AIS 1.0</button>
                         <button onClick={() => setAisTab(aisTab === '2.0' ? null : '2.0')} className={`py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === '2.0' ? 'bg-indigo-100 border-indigo-500 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Scheda AIS 2.0</button>
                     </div>
+                    {/* TASTO MODIFICATO: ORA MOSTRA UNDER CONSTRUCTION COME RICHIESTO */}
                     <button onClick={() => setAisTab(aisTab === 'pairing' ? null : 'pairing')} className={`w-full py-3 rounded-xl text-sm font-bold border transition-all ${aisTab === 'pairing' ? 'bg-orange-100 border-orange-500 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400'}`}>Abbinamento Cibo-Vino</button>
 
                     {/* CONTENUTO SCHEDA 1.0 */}
@@ -550,6 +570,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                             </div>
                         </div>
                     )}
+                    {/* ZONA UNDER CONSTRUCTION CONDIVISA PER AIS 2.0 E PAIRING */}
                     {(aisTab === '2.0' || aisTab === 'pairing') && (<div className="mt-3 p-6 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-dashed border-gray-300 dark:border-slate-700 text-center animate-in slide-in-from-top-2"><Icons.Loader2 className="animate-spin mx-auto text-gray-400 mb-2" size={24}/><p className="text-sm text-gray-500 font-medium">Under Construction 🚧</p></div>)}
                 </div>
             )}
@@ -575,7 +596,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     );
 }
 
-function CellarView({ cellar, setCellar, apiKey, startSession }) {
+function CellarView({ cellar, setCellar, apiKey, startSession, onDrink }) {
     const [filterOpen, setFilterOpen] = useState(false);
     const [activeFilter, setActiveFilter] = useState('all'); 
     const [searchQ, setSearchQ] = useState('');
@@ -608,6 +629,14 @@ function CellarView({ cellar, setCellar, apiKey, startSession }) {
         // Per clonare, rimuoviamo l'ID così viene trattato come nuovo inserimento
         const clone = { ...bottle, id: null, q: 1, isWishlist: false };
         startSession('Acquisto', clone);
+    };
+
+    // --- NUOVO GESTORE PER IL TASTO BEVI ---
+    const handleDrinkClick = (e, b) => {
+        e.stopPropagation();
+        if (confirm(`Vuoi bere questa bottiglia di ${b.wine}? 🍷\nSarà aggiunta al Diario e rimossa dalla Cantina.`)) {
+            onDrink(b);
+        }
     };
 
     const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
@@ -675,7 +704,7 @@ function CellarView({ cellar, setCellar, apiKey, startSession }) {
                                 {b.grapes && b.grapes.length > 0 && (<div><span className="text-[10px] opacity-60 uppercase block mb-1">Uvaggio</span><div className="flex flex-wrap gap-1">{b.grapes.map((g, i) => <span key={i} className="text-[10px] bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded">{g.name} {g.perc}%</span>)}</div></div>)}
                                 {b.drinkFrom && b.drinkTo && (<div className="mt-1 flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${new Date().getFullYear() >= b.drinkFrom && new Date().getFullYear() <= b.drinkTo ? 'bg-green-500' : (new Date().getFullYear() < b.drinkFrom ? 'bg-yellow-400' : 'bg-red-500')}`}></span><span className="text-[10px] opacity-70">{b.drinkFrom}-{b.drinkTo}</span></div>)}
                                 <div className="flex gap-2 mt-4 pt-2 border-t border-black/5">
-                                    <button onClick={(e) => { e.stopPropagation(); startSession('Degustazione', b); }} className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><Icons.Wine size={14}/> Bevi</button>
+                                    <button onClick={(e) => handleDrinkClick(e, b)} className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><Icons.Wine size={14}/> Bevi</button>
                                     <button onClick={(e) => { e.stopPropagation(); startSession('Acquisto', b); }} className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-bold flex items-center gap-1"><Icons.Pencil size={14}/> Modifica</button>
                                     <button onClick={(e) => { e.stopPropagation(); handleClone(b); }} className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-bold flex items-center gap-1"><Icons.Copy size={14}/> Clona</button>
                                     <button onClick={(e) => { e.stopPropagation(); if(confirm("Eliminare?")) setCellar(cellar.filter(x => x.id !== b.id)); }} className="px-3 py-2 bg-red-50 text-red-500 rounded-lg text-xs font-bold"><Icons.Trash2 size={14}/></button>
