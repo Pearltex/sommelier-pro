@@ -128,7 +128,6 @@ function App() {
     const [tab, setTab] = useState('home');
     const [session, setSession] = useState(null); 
     const [showSettings, setShowSettings] = useState(false);
-    // GESTIONE CELEBRAZIONE (pop o ovation)
     const [celebration, setCelebration] = useState(null); 
     
     const [darkMode, setDarkMode] = useState(() => { try { return localStorage.getItem('somm_theme') === 'dark'; } catch { return false; } });
@@ -161,18 +160,30 @@ function App() {
         setTab('session');
     };
 
-    // HELPER PER SUONI E FESTA
+    // --- HELPER PER SUONI (MP3 FIX) ---
     const triggerCelebration = (type) => {
+        // Usiamo file MP3 ospitati su CDN affidabili (Pixabay/SoundJay) per compatibilità Safari/iOS
         let soundUrl = "";
-        if (type === 'pop') soundUrl = "https://actions.google.com/sounds/v1/cartoon/pop.ogg";
-        if (type === 'ovation') soundUrl = "https://actions.google.com/sounds/v1/crowds/human_crowd_shout_cheer_applause.ogg";
+        if (type === 'pop') soundUrl = "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a7346b.mp3?filename=cork-85200.mp3"; // Cork pop
+        if (type === 'ovation') soundUrl = "https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3?filename=people-clapping-6086.mp3"; // Clapping
         
         const audio = new Audio(soundUrl);
-        audio.volume = 0.5;
-        audio.play().catch(e => console.log("Audio play failed", e));
+        audio.volume = 0.6;
+        
+        // Trick per forzare il caricamento
+        audio.load();
+        
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(_ => {
+                // Audio partito
+            }).catch(error => {
+                console.error("Errore riproduzione audio:", error);
+            });
+        }
         
         setCelebration({ type });
-        setTimeout(() => setCelebration(null), 3000); // Durata festa
+        setTimeout(() => setCelebration(null), 3000); 
     };
 
     const handleQuickDrink = (bottle) => {
@@ -253,7 +264,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.7" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.8" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
