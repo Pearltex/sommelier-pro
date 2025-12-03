@@ -160,26 +160,20 @@ function App() {
         setTab('session');
     };
 
-    // --- HELPER PER SUONI (MP3 FIX) ---
+    // --- HELPER PER SUONI (LINK STABILI) ---
     const triggerCelebration = (type) => {
-        // Usiamo file MP3 ospitati su CDN affidabili (Pixabay/SoundJay) per compatibilità Safari/iOS
+        // Link diretti a file MP3 stabili
         let soundUrl = "";
-        if (type === 'pop') soundUrl = "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a7346b.mp3?filename=cork-85200.mp3"; // Cork pop
-        if (type === 'ovation') soundUrl = "https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3?filename=people-clapping-6086.mp3"; // Clapping
+        if (type === 'pop') soundUrl = "https://soundbible.com/mp3/Champagne%20Cork%20Popping-SoundBible.com-1636989476.mp3"; 
+        if (type === 'ovation') soundUrl = "https://soundbible.com/mp3/Audience_Applause-Matthiew11-1206899159.mp3"; 
         
         const audio = new Audio(soundUrl);
         audio.volume = 0.6;
         
-        // Trick per forzare il caricamento
-        audio.load();
-        
+        audio.load(); // Forza il caricamento
         const playPromise = audio.play();
         if (playPromise !== undefined) {
-            playPromise.then(_ => {
-                // Audio partito
-            }).catch(error => {
-                console.error("Errore riproduzione audio:", error);
-            });
+            playPromise.then(_ => {}).catch(error => console.error("Errore audio:", error));
         }
         
         setCelebration({ type });
@@ -264,7 +258,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.8" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.9" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -762,40 +756,6 @@ function HistoryView({ logs, onEdit, onDelete, startSession }) {
         <div className="space-y-4 pb-20">
             <div className="sticky top-0 bg-slate-50 dark:bg-slate-950 pb-2 z-10 pt-2"><div className="relative shadow-sm rounded-xl"><Icons.Search className="absolute left-3 top-3.5 text-gray-400" size={16} /><input className="w-full pl-10 p-3 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 bg-white dark:bg-slate-900 dark:text-white" placeholder="Cerca..." value={q} onChange={e => setQ(e.target.value)} /></div></div>
             {filtered.map(l => { const isExpanded = expandedId === l.id; return ( <div key={l.id} className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 transition-all"><div onClick={() => toggleExpand(l.id)} className="cursor-pointer"><div className="flex justify-between mb-2"><div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Icons.Calendar size={10} /> {l.date.split('-').reverse().join('/')} • {l.mode}</div><div className="font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-xs">€{l.bill}</div></div><div className="flex justify-between items-center"><div><div className="font-bold text-xl text-slate-800 dark:text-white leading-none mb-1">{l.locName || 'Evento'}</div><div className="text-xs text-gray-500 flex items-center gap-1"><Icons.MapPin size={10}/> {l.locCity || 'Nessun luogo'}</div></div>{isExpanded ? <Icons.ChevronUp size={24} className="text-slate-300"/> : <Icons.ChevronDown size={24} className="text-slate-300"/>}</div></div>{isExpanded && (<div className="mt-6 pt-4 border-t border-dashed border-gray-200 dark:border-slate-700 animate-in slide-in-from-top-2 fade-in"><div className="space-y-3 mb-6">{l.items.map((i, idx) => ( <div key={idx} className={`flex gap-3 p-3 rounded-2xl border ${getItemStyle(i.type)}`}>{i.imgWine ? <div className="w-14 h-20 bg-cover bg-center rounded-xl flex-shrink-0 shadow-sm" style={{backgroundImage: `url(${i.imgWine})`}}></div> : <div className="w-14 h-20 bg-white/50 dark:bg-black/20 rounded-xl flex items-center justify-center flex-shrink-0"><Icons.Wine size={20} className="opacity-30"/></div>}<div className="flex-1 min-w-0"><div className="font-black text-base truncate">{i.wine || i.food}</div><div className="text-xs opacity-80 truncate">{i.prod} {i.year}</div><div className="flex flex-wrap gap-1 mt-2">{i.votePersonal && <span className="text-[9px] font-bold bg-white/80 dark:bg-black/30 px-1.5 py-0.5 rounded shadow-sm">⭐ {i.votePersonal}</span>}</div><button onClick={(e) => { e.stopPropagation(); startSession('Degustazione', i); }} className="mt-2 text-[10px] flex items-center gap-1 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-600 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"><Icons.Copy size={10}/> Ripeti</button></div></div> ))}</div><div className="grid grid-cols-2 gap-3 mb-4"><div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700"><div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase mb-1"><Icons.Star size={10}/> Location</div><div className="font-black text-xl text-slate-800 dark:text-white">{l.locVote || '-'}</div></div><div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700"><div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase mb-1"><Icons.Users size={10}/> Amici</div><div className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-tight line-clamp-2">{l.friends && l.friends.length > 0 ? l.friends.join(", ") : "-"}</div></div></div>{l.note && (<div className="bg-yellow-50/50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 mb-4 text-sm text-slate-700 dark:text-yellow-100 italic relative"><Icons.Quote size={16} className="text-yellow-200 absolute top-2 right-2"/>"{l.note}"</div>)}<div className="flex gap-2"><Button onClick={() => onEdit(l)} variant="ghost" className="h-10 text-xs text-indigo-500 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50" icon={Icons.Pencil}>Modifica</Button><Button onClick={() => onDelete(l.id)} variant="ghost" className="h-10 text-xs text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50" icon={Icons.Trash2}>Elimina</Button></div></div>)}</div> ); })}</div>
-    );
-}
-
-function StatsView({ logs, cellar }) {
-    const stats = useMemo(() => {
-        let totalSpent = 0; let totalBottles = 0; let totalValueCellar = 0; let scoreSum = 0; let scoreCount = 0;
-        const typeCounts = { Rosso: 0, Bianco: 0, Bollicine: 0, Rosato: 0, Altro: 0 };
-        logs.forEach(l => {
-            totalSpent += (l.bill || 0);
-            l.items.forEach(i => {
-                totalBottles++;
-                const t = (i.type || "Altro").toLowerCase();
-                if (t.includes('rosso')) typeCounts.Rosso++; else if (t.includes('bianco')) typeCounts.Bianco++; else if (t.includes('boll') || t.includes('spumante')) typeCounts.Bollicine++; else if (t.includes('rosato')) typeCounts.Rosato++; else typeCounts.Altro++;
-                if (i.votePersonal) { scoreSum += parseFloat(i.votePersonal); scoreCount++; }
-            });
-        });
-        cellar.forEach(b => { if (!b.isWishlist) totalValueCellar += (b.pr || 0) * (b.q || 1); });
-        
-        const avgPrice = totalBottles > 0 ? (totalSpent / totalBottles).toFixed(1) : 0;
-        const avgScore = scoreCount > 0 ? (scoreSum / scoreCount).toFixed(1) : "-";
-        const totalTypes = Object.values(typeCounts).reduce((a, b) => a + b, 0) || 1;
-        const typeSegments = [{ l: 'Rossi', v: typeCounts.Rosso, c: '#ef4444' }, { l: 'Bianchi', v: typeCounts.Bianco, c: '#facc15' }, { l: 'Bolle', v: typeCounts.Bollicine, c: '#fbbf24' }, { l: 'Rosati', v: typeCounts.Rosato, c: '#f472b6' }].map(s => ({...s, p: (s.v / totalTypes) * 100})).filter(s => s.v > 0);
-
-        return { totalSpent, totalValueCellar, avgPrice, avgScore, typeSegments };
-    }, [logs, cellar]);
-
-    const getConicGradient = () => { let angle = 0; return `conic-gradient(${stats.typeSegments.map(s => { const start = angle; angle += (s.p * 3.6); return `${s.c} ${start}deg ${angle}deg`; }).join(', ')})`; };
-
-    return (
-        <div className="space-y-6 pb-20 animate-in slide-in-from-bottom-4 fade-in">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white px-1">Dashboard</h2>
-            <div className="grid grid-cols-2 gap-3"><div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800"><div className="flex items-center gap-2 mb-1 text-xs font-bold text-gray-400 uppercase"><Icons.Archive size={14} className="text-indigo-500"/> Valore Cantina</div><div className="text-2xl font-black text-slate-800 dark:text-white">€{stats.totalValueCellar.toLocaleString()}</div></div><div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800"><div className="flex items-center gap-2 mb-1 text-xs font-bold text-gray-400 uppercase"><Icons.Wine size={14} className="text-emerald-500"/> Investito Tot.</div><div className="text-2xl font-black text-slate-800 dark:text-white">€{stats.totalSpent.toLocaleString()}</div></div><div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800"><div className="flex items-center gap-2 mb-1 text-xs font-bold text-gray-400 uppercase"><Icons.Activity size={14} className="text-orange-500"/> Prezzo Medio</div><div className="text-2xl font-black text-slate-800 dark:text-white">€{stats.avgPrice}</div></div><div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800"><div className="flex items-center gap-2 mb-1 text-xs font-bold text-gray-400 uppercase"><Icons.Star size={14} className="text-yellow-500"/> Voto Medio</div><div className="text-2xl font-black text-slate-800 dark:text-white">{stats.avgScore}</div></div></div>
-            {stats.typeSegments.length > 0 && (<Card><h3 className="font-bold text-lg mb-4 flex items-center gap-2 dark:text-white"><Icons.PieChart size={20} className="text-slate-400"/> Cosa Bevi?</h3><div className="flex items-center gap-6"><div className="relative w-32 h-32 rounded-full shadow-inner" style={{ background: getConicGradient() }}><div className="absolute inset-0 m-auto w-20 h-20 bg-white dark:bg-slate-900 rounded-full flex items-center justify-center shadow-sm"><Icons.Wine className="text-slate-300 dark:text-slate-700 opacity-50" size={24}/></div></div><div className="flex-1 space-y-2">{stats.typeSegments.map((s, i) => (<div key={i} className="flex items-center justify-between text-sm"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{backgroundColor: s.c}}></span><span className="font-medium text-slate-700 dark:text-slate-300">{s.l}</span></div><span className="font-bold text-slate-900 dark:text-white">{Math.round(s.p)}%</span></div>))}</div></div></Card>)}
-        </div>
     );
 }
 
