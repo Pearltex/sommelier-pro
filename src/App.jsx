@@ -128,6 +128,7 @@ function App() {
     const [tab, setTab] = useState('home');
     const [session, setSession] = useState(null); 
     const [showSettings, setShowSettings] = useState(false);
+    const [isCelebrating, setIsCelebrating] = useState(false); // STATO PER L'ANIMAZIONE
     const [darkMode, setDarkMode] = useState(() => { try { return localStorage.getItem('somm_theme') === 'dark'; } catch { return false; } });
     const [apiKey, setApiKey] = useState(() => { try { return localStorage.getItem('somm_apikey') || ""; } catch { return ""; } });
     const [logs, setLogs] = useState(() => { try { return JSON.parse(localStorage.getItem('somm_logs')) || []; } catch { return []; } });
@@ -158,14 +159,22 @@ function App() {
         setTab('session');
     };
 
-    // --- NUOVA FUNZIONE PER BERE RAPIDAMENTE ---
+    // --- NUOVA FUNZIONE PER BERE RAPIDAMENTE CON ANIMAZIONE ---
     const handleQuickDrink = (bottle) => {
-        // 1. Sottrai dalla cantina
+        // 1. Attiva l'animazione e il suono
+        setIsCelebrating(true);
+        const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg"); // Suono 'Pop' affidabile
+        audio.volume = 0.5;
+        audio.play().catch(e => console.log("Audio play failed (user didn't interact?)", e));
+
+        // 2. Disattiva animazione dopo 2.5 secondi
+        setTimeout(() => setIsCelebrating(false), 2500);
+
+        // 3. Logica Database
         const updatedCellar = cellar.map(b => 
             b.id === bottle.id ? { ...b, q: Math.max(0, b.q - 1) } : b
-        ).filter(b => b.q > 0); // Rimuove se quantità arriva a 0
+        ).filter(b => b.q > 0);
 
-        // 2. Aggiungi ai log (Diario)
         const newLog = {
             id: Date.now(),
             date: new Date().toISOString().split('T')[0],
@@ -175,13 +184,12 @@ function App() {
             bill: bottle.price || 0,
             locVote: '',
             note: 'Bottiglia consumata direttamente dalla cantina.',
-            items: [{ ...bottle, q: 1, votePersonal: '' }], // Mantieni i dati del vino
+            items: [{ ...bottle, q: 1, votePersonal: '' }], 
             friends: []
         };
 
         setCellar(updatedCellar);
         setLogs([newLog, ...logs]);
-        alert(`Salute! 🍷 "${bottle.wine}" è stato registrato nel Diario.`);
     };
 
     const editSession = (log) => { setSession({ ...log, step: 'context' }); setTab('session'); };
@@ -233,7 +241,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.5" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.6" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -253,6 +261,9 @@ function App() {
         <div className="min-h-screen bg-gray-100 dark:bg-black flex items-center justify-center font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
             <div className="w-full max-w-md h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative shadow-2xl overflow-hidden border-x border-gray-200 dark:border-slate-800">
                 
+                {/* CELEBRATION OVERLAY */}
+                {isCelebrating && <CelebrationOverlay />}
+
                 {/* HEADER */}
                 <div className="z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
                     <div className="flex items-center gap-2">
@@ -764,5 +775,71 @@ function StatsView({ logs, cellar }) {
         </div>
     );
 }
+
+// --- COMPONENTE ANIMAZIONE FESTA ---
+const CelebrationOverlay = () => {
+    // Genera 50 coriandoli con colori e posizioni casuali
+    const particles = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
+        id: i,
+        x: (Math.random() - 0.5) * 200, // Direzione X casuale
+        y: (Math.random() - 1) * 200 - 50, // Direzione Y verso l'alto
+        color: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'][Math.floor(Math.random() * 5)],
+        size: Math.random() * 8 + 4,
+        delay: Math.random() * 0.2
+    })), []);
+
+    return (
+        <div className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center">
+            {/* Animazione CSS iniettata */}
+            <style>{`
+                @keyframes explode {
+                    0% { transform: translate(0, 0) scale(0); opacity: 1; }
+                    80% { opacity: 1; }
+                    100% { transform: translate(var(--tw-translate-x), var(--tw-translate-y)) scale(1); opacity: 0; }
+                }
+                @keyframes floatUp {
+                    0% { transform: translateY(0) scale(1); opacity: 0.8; }
+                    100% { transform: translateY(-300px) scale(0); opacity: 0; }
+                }
+            `}</style>
+            
+            {/* Coriandoli */}
+            {particles.map(p => (
+                <div key={p.id} 
+                    style={{
+                        '--tw-translate-x': `${p.x}vw`,
+                        '--tw-translate-y': `${p.y}vh`,
+                        backgroundColor: p.color,
+                        width: p.size,
+                        height: p.size,
+                        animation: `explode 1.5s ease-out forwards ${p.delay}s`
+                    }}
+                    className="absolute rounded-full"
+                />
+            ))}
+            
+            {/* Scritta Centrale */}
+            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-300 border border-indigo-200 dark:border-indigo-800 text-center">
+                <div className="text-6xl mb-2 animate-bounce">🍾</div>
+                <h2 className="text-2xl font-black text-indigo-600 dark:text-indigo-400">Cin Cin!</h2>
+                <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Bottiglia Stappata!</p>
+            </div>
+
+            {/* Effetto Spuma (bollicine bianche) */}
+            {Array.from({ length: 20 }).map((_, i) => (
+                <div key={`bubble-${i}`}
+                    className="absolute bg-white/50 rounded-full"
+                    style={{
+                        width: Math.random() * 20 + 5,
+                        height: Math.random() * 20 + 5,
+                        left: `${50 + (Math.random() - 0.5) * 20}%`,
+                        bottom: '40%',
+                        animation: `floatUp ${1 + Math.random()}s ease-out forwards`
+                    }}
+                />
+            ))}
+        </div>
+    );
+};
 
 export default App;
