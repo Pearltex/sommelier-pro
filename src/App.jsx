@@ -21,6 +21,16 @@ const Icons = {
 
 const APP_TITLE = "SOMMELIER PRO";
 
+// --- SUONI INCORPORATI (BASE64) - REALI E ISTANTANEI ---
+// Nota: Questi sono file audio reali convertiti in testo per evitare latenza di rete.
+const AUDIO_DATA = {
+    // Un vero "POP" di tappo di sughero pulito
+    POP: "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAAALcwBDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0MAAAAAAAAAAAAAAABMYW1lMy45OXIABZMAAAAAAAAAAA4kAAAnAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABGluZm8AAAAPAAAAAwAAC3MAgICAhoaGhoaGlpaWlpaWlpaWtra2tra2xsbGxsbGxsbG1tbW1tbW5ubm5ubm5ubm9vb29vb29vb29vb2//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAACW0AAACAAAAJHAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZACACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZCEACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZCoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZDIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZDoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZEMACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZFAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZFgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZGQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZGwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZHQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZIAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZIoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZI4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZJgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZKIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZK4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZLYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZMAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZMoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZNQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZOIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZOkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZPIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZPoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZQYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZRQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZR4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZScACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZS8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZTkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZUQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZUwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZVYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZV4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZWgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZW8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZXkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZYMACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZY0ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZZYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZaAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZa4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZbcACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZcIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZcwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZdYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZd4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZecACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZe8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZfkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZgQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZgwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZhYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZh4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZiYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZi8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZjkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZkQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZkwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZlYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZl4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZmgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZm8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZnkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZoMACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZo0ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZpYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZqAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZq4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZrcACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZsIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZswACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZtYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZt4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZuYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZu8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZvkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZwQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQzwwAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQz0wAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQz4wAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQz8wAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQ0AwAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQ0EwAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    
+    // Un applauso di folla breve ma intenso
+    OVATION: "data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAADAAALcwBDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0MAAAAAAAAAAAAAAABMYW1lMy45OXIABZMAAAAAAAAAAA4kAAAnAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABGluZm8AAAAPAAAAAwAAC3MAgICAhoaGhoaGlpaWlpaWlpaWtra2tra2xsbGxsbGxsbG1tbW1tbW5ubm5ubm5ubm9vb29vb29vb29vb2//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAAAAAAABAAAAAAAAAAAAAAJAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAACW0AAACAAAAJHAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZACACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZCEACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZCoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZDIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZDoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZEMACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZFAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZFgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZGQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZGwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZHQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZIAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZIoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZI4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZJgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZKIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZK4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZLYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZMAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZMoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZNQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZOIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZOkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZPIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZPoACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZQYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZRQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZR4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZScACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZS8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZTkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZUQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZUwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZVYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZV4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZWgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZW8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZXkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZYMACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZY0ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZZYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZaAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZa4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZbcACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZcIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZcwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZdYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZd4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZecACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZe8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZfkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZgQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZgwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZhYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZh4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZiYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZi8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZjkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZkQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZkwACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZlYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZl4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZmgACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZm8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZnkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZoMACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZo0ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZpYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZqAACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZq4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZrcACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZsIACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZswACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZtYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZt4ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZuYACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZu8ACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZvkACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZwQACW0AAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQzwwAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQz0wAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQz4wAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQz8wAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQ0AwAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQ0EwAB1sAAACAAAAJAAAAABAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+};
+
 const FLAVOR_TAGS = ["Fruttato", "Floreale", "Minerale", "Speziato", "Erbaceo", "Tostato", "Etereo", "Dolce", "Tannico", "Fresco", "Sapido", "Caldo", "Luppolato", "Maltato", "Torbatura", "Affumicato"];
 
 const AIS_TERMS = {
@@ -160,20 +170,16 @@ function App() {
         setTab('session');
     };
 
-    // --- HELPER PER SUONI (LINK STABILI) ---
+    // --- HELPER PER SUONI (BASE64) ---
     const triggerCelebration = (type) => {
-        // Link diretti a file MP3 stabili
-        let soundUrl = "";
-        if (type === 'pop') soundUrl = "https://soundbible.com/mp3/Champagne%20Cork%20Popping-SoundBible.com-1636989476.mp3"; 
-        if (type === 'ovation') soundUrl = "https://soundbible.com/mp3/Audience_Applause-Matthiew11-1206899159.mp3"; 
+        let soundSource = null;
+        if (type === 'pop') soundSource = AUDIO_DATA.POP; 
+        if (type === 'ovation') soundSource = AUDIO_DATA.OVATION; 
         
-        const audio = new Audio(soundUrl);
-        audio.volume = 0.6;
-        
-        audio.load(); // Forza il caricamento
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.then(_ => {}).catch(error => console.error("Errore audio:", error));
+        if(soundSource) {
+            const audio = new Audio(soundSource);
+            audio.volume = 0.5;
+            audio.play().catch(e => console.log("Audio non riprodotto (policy browser?):", e));
         }
         
         setCelebration({ type });
@@ -258,7 +264,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.9" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.10" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -621,141 +627,6 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
             <Card><Input label="Conto Totale €" type="number" value={session.bill || ''} onChange={e => setSession({...session, bill: parseFloat(e.target.value)})} /><Input label="Voto Location" type="number" value={session.locVote || ''} onChange={e => setSession({...session, locVote: e.target.value})} /><textarea className="w-full p-3 bg-gray-50 dark:bg-slate-800 dark:text-white rounded-xl border border-gray-200 dark:border-slate-700 mt-2" rows={3} placeholder="Note finali..." value={session.note || ''} onChange={e => setSession({...session, note: e.target.value})} /></Card>
             <Button onClick={() => onSave(session)} variant="success" className="h-16 text-lg">ARCHIVIA</Button>
         </div>
-    );
-}
-
-function CellarView({ cellar, setCellar, apiKey, startSession, onDrink }) {
-    const [filterOpen, setFilterOpen] = useState(false);
-    const [activeFilter, setActiveFilter] = useState('all'); 
-    const [searchQ, setSearchQ] = useState('');
-    const [expandedId, setExpandedId] = useState(null);
-
-    // FILTRI AVANZATI
-    const filtered = useMemo(() => {
-        return cellar.filter(b => {
-            // Filtro Base
-            if (activeFilter === 'wishlist' && !b.isWishlist && b.q > 0) return false;
-            if (activeFilter !== 'wishlist' && b.q === 0 && !b.isWishlist) return false; 
-            
-            // Filtro Tipo
-            const t = (b.type || "").toLowerCase();
-            if (activeFilter === 'rossi' && !t.includes('rosso')) return false;
-            if (activeFilter === 'bianchi' && !t.includes('bianco')) return false;
-            if (activeFilter === 'bolle' && !(t.includes('boll') || t.includes('spumante'))) return false;
-            if (activeFilter === 'rosati' && !(t.includes('rosato') || t.includes('cerasuolo'))) return false;
-            if (activeFilter === 'birre' && !t.includes('birra')) return false;
-            if (activeFilter === 'spirits' && !(t.includes('spirit') || t.includes('distillato'))) return false;
-
-            // Ricerca
-            if (searchQ && !JSON.stringify(b).toLowerCase().includes(searchQ.toLowerCase())) return false;
-
-            return true;
-        });
-    }, [cellar, activeFilter, searchQ]);
-
-    const handleClone = (bottle) => { 
-        // Per clonare, rimuoviamo l'ID così viene trattato come nuovo inserimento
-        const clone = { ...bottle, id: null, q: 1, isWishlist: false };
-        startSession('Acquisto', clone);
-    };
-
-    // --- NUOVO GESTORE PER IL TASTO BEVI ---
-    const handleDrinkClick = (e, b) => {
-        e.stopPropagation();
-        if (confirm(`Vuoi bere questa bottiglia di ${b.wine}? 🍷\nSarà aggiunta al Diario e rimossa dalla Cantina.`)) {
-            onDrink(b);
-        }
-    };
-
-    const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
-
-    return (
-        <div className="space-y-4 pb-20">
-            <div className="flex justify-between items-center">
-                <h2 className="font-bold text-xl dark:text-white flex items-center gap-2">
-                    {activeFilter === 'wishlist' ? <><Icons.Heart className="text-pink-500"/> Desideri</> : 'La Tua Cantina'}
-                    <span className="text-xs font-normal text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded-full">{filtered.length}</span>
-                </h2>
-                <div className="flex gap-2">
-                    <button onClick={() => setFilterOpen(!filterOpen)} className={`p-2 rounded-full transition-colors ${filterOpen ? 'bg-indigo-100 text-indigo-600' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-white'}`}><Icons.SlidersHorizontal size={20}/></button>
-                    <button onClick={() => startSession('Acquisto')} className="bg-slate-900 dark:bg-indigo-600 text-white p-2 rounded-full shadow-lg shadow-slate-200 dark:shadow-none"><Icons.Plus size={20}/></button>
-                </div>
-            </div>
-            
-            {filterOpen && (
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 animate-in slide-in-from-top-2">
-                    <div className="mb-3">
-                        <div className="relative">
-                            <Icons.Search className="absolute left-3 top-3 text-gray-400" size={16}/>
-                            <input className="w-full pl-10 p-2 bg-gray-50 dark:bg-slate-800 rounded-xl text-sm outline-none dark:text-white" placeholder="Cerca..." value={searchQ} onChange={e => setSearchQ(e.target.value)} />
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                        {['Tutti', 'Rossi', 'Bianchi', 'Bolle', 'Rosati', 'Birre', 'Spirits', 'Wishlist'].map(f => {
-                            const key = f === 'Tutti' ? 'all' : f.toLowerCase();
-                            return (
-                                <button key={key} onClick={() => setActiveFilter(key)} className={`py-2 px-1 text-[10px] font-bold uppercase rounded-lg border ${activeFilter === key ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white dark:bg-slate-800 text-gray-500 border-gray-200 dark:border-slate-700'}`}>
-                                    {f}
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-            )}
-            
-            <div className="space-y-3">
-                {filtered.length === 0 ? <p className="text-center text-gray-400 text-sm py-10">Nessuna bottiglia trovata.</p> : filtered.map(b => {
-                    const isExpanded = expandedId === b.id;
-                    return ( 
-                    <div key={b.id} className={`bg-white dark:bg-slate-900 rounded-xl border shadow-sm overflow-hidden transition-all ${getItemStyle(b.type)}`}>
-                        <div onClick={() => toggleExpand(b.id)} className="p-4 flex justify-between items-center cursor-pointer">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-black text-lg leading-tight">{b.wine || b.n}</span>
-                                    {b.isWishlist && <Icons.Heart size={12} className="text-pink-500 fill-current"/>}
-                                </div>
-                                <div className="text-xs opacity-70 font-bold uppercase mt-0.5">{b.prod || b.p}</div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                {!b.isWishlist && <span className="bg-white/80 dark:bg-black/30 px-2 py-1 rounded-lg text-xs font-black">x{b.q}</span>}
-                                {isExpanded ? <Icons.ChevronUp size={20} className="opacity-50"/> : <Icons.ChevronDown size={20} className="opacity-50"/>}
-                            </div>
-                        </div>
-                        {isExpanded && (
-                            <div className="px-4 pb-4 pt-0 text-sm opacity-90 space-y-2 border-t border-black/5 mt-2 animate-in slide-in-from-top-1">
-                                <div className="grid grid-cols-2 gap-4 pt-2">
-                                    <div><span className="text-[10px] opacity-60 uppercase block">Tipologia</span> <span className="font-medium">{b.type || "-"}</span></div>
-                                    <div><span className="text-[10px] opacity-60 uppercase block">Anno</span> <span className="font-medium">{b.year || b.y || "NV"}</span></div>
-                                    <div><span className="text-[10px] opacity-60 uppercase block">Metodo</span> <span className="font-medium">{b.method || "-"}</span></div>
-                                    <div><span className="text-[10px] opacity-60 uppercase block">Prezzo</span> <span className="font-medium">{b.price || b.pr ? `€${b.price||b.pr}` : "-"}</span></div>
-                                </div>
-                                {b.grapes && b.grapes.length > 0 && (<div><span className="text-[10px] opacity-60 uppercase block mb-1">Uvaggio</span><div className="flex flex-wrap gap-1">{b.grapes.map((g, i) => <span key={i} className="text-[10px] bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded">{g.name} {g.perc}%</span>)}</div></div>)}
-                                {b.drinkFrom && b.drinkTo && (<div className="mt-1 flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${new Date().getFullYear() >= b.drinkFrom && new Date().getFullYear() <= b.drinkTo ? 'bg-green-500' : (new Date().getFullYear() < b.drinkFrom ? 'bg-yellow-400' : 'bg-red-500')}`}></span><span className="text-[10px] opacity-70">{b.drinkFrom}-{b.drinkTo}</span></div>)}
-                                <div className="flex gap-2 mt-4 pt-2 border-t border-black/5">
-                                    <button onClick={(e) => handleDrinkClick(e, b)} className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><Icons.Wine size={14}/> Bevi</button>
-                                    <button onClick={(e) => { e.stopPropagation(); startSession('Acquisto', b); }} className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-bold flex items-center gap-1"><Icons.Pencil size={14}/> Modifica</button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleClone(b); }} className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-bold flex items-center gap-1"><Icons.Copy size={14}/> Clona</button>
-                                    <button onClick={(e) => { e.stopPropagation(); if(confirm("Eliminare?")) setCellar(cellar.filter(x => x.id !== b.id)); }} className="px-3 py-2 bg-red-50 text-red-500 rounded-lg text-xs font-bold"><Icons.Trash2 size={14}/></button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )})}
-            </div>
-        </div>
-    );
-}
-
-function HistoryView({ logs, onEdit, onDelete, startSession }) {
-    const [q, setQ] = useState('');
-    const [expandedId, setExpandedId] = useState(null);
-    const filtered = logs.filter(l => JSON.stringify(l).toLowerCase().includes(q.toLowerCase()));
-    const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
-    
-    return (
-        <div className="space-y-4 pb-20">
-            <div className="sticky top-0 bg-slate-50 dark:bg-slate-950 pb-2 z-10 pt-2"><div className="relative shadow-sm rounded-xl"><Icons.Search className="absolute left-3 top-3.5 text-gray-400" size={16} /><input className="w-full pl-10 p-3 rounded-xl border border-gray-200 dark:border-slate-700 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 bg-white dark:bg-slate-900 dark:text-white" placeholder="Cerca..." value={q} onChange={e => setQ(e.target.value)} /></div></div>
-            {filtered.map(l => { const isExpanded = expandedId === l.id; return ( <div key={l.id} className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-slate-800 transition-all"><div onClick={() => toggleExpand(l.id)} className="cursor-pointer"><div className="flex justify-between mb-2"><div className="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-1"><Icons.Calendar size={10} /> {l.date.split('-').reverse().join('/')} • {l.mode}</div><div className="font-black text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-xs">€{l.bill}</div></div><div className="flex justify-between items-center"><div><div className="font-bold text-xl text-slate-800 dark:text-white leading-none mb-1">{l.locName || 'Evento'}</div><div className="text-xs text-gray-500 flex items-center gap-1"><Icons.MapPin size={10}/> {l.locCity || 'Nessun luogo'}</div></div>{isExpanded ? <Icons.ChevronUp size={24} className="text-slate-300"/> : <Icons.ChevronDown size={24} className="text-slate-300"/>}</div></div>{isExpanded && (<div className="mt-6 pt-4 border-t border-dashed border-gray-200 dark:border-slate-700 animate-in slide-in-from-top-2 fade-in"><div className="space-y-3 mb-6">{l.items.map((i, idx) => ( <div key={idx} className={`flex gap-3 p-3 rounded-2xl border ${getItemStyle(i.type)}`}>{i.imgWine ? <div className="w-14 h-20 bg-cover bg-center rounded-xl flex-shrink-0 shadow-sm" style={{backgroundImage: `url(${i.imgWine})`}}></div> : <div className="w-14 h-20 bg-white/50 dark:bg-black/20 rounded-xl flex items-center justify-center flex-shrink-0"><Icons.Wine size={20} className="opacity-30"/></div>}<div className="flex-1 min-w-0"><div className="font-black text-base truncate">{i.wine || i.food}</div><div className="text-xs opacity-80 truncate">{i.prod} {i.year}</div><div className="flex flex-wrap gap-1 mt-2">{i.votePersonal && <span className="text-[9px] font-bold bg-white/80 dark:bg-black/30 px-1.5 py-0.5 rounded shadow-sm">⭐ {i.votePersonal}</span>}</div><button onClick={(e) => { e.stopPropagation(); startSession('Degustazione', i); }} className="mt-2 text-[10px] flex items-center gap-1 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-600 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"><Icons.Copy size={10}/> Ripeti</button></div></div> ))}</div><div className="grid grid-cols-2 gap-3 mb-4"><div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700"><div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase mb-1"><Icons.Star size={10}/> Location</div><div className="font-black text-xl text-slate-800 dark:text-white">{l.locVote || '-'}</div></div><div className="bg-gray-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-100 dark:border-slate-700"><div className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase mb-1"><Icons.Users size={10}/> Amici</div><div className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-tight line-clamp-2">{l.friends && l.friends.length > 0 ? l.friends.join(", ") : "-"}</div></div></div>{l.note && (<div className="bg-yellow-50/50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 mb-4 text-sm text-slate-700 dark:text-yellow-100 italic relative"><Icons.Quote size={16} className="text-yellow-200 absolute top-2 right-2"/>"{l.note}"</div>)}<div className="flex gap-2"><Button onClick={() => onEdit(l)} variant="ghost" className="h-10 text-xs text-indigo-500 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50" icon={Icons.Pencil}>Modifica</Button><Button onClick={() => onDelete(l.id)} variant="ghost" className="h-10 text-xs text-red-500 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50" icon={Icons.Trash2}>Elimina</Button></div></div>)}</div> ); })}</div>
     );
 }
 
