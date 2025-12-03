@@ -161,17 +161,39 @@ function App() {
     const editSession = (log) => { setSession({ ...log, step: 'context' }); setTab('session'); };
     const deleteSession = (id) => { if(confirm("Eliminare?")) setLogs(logs.filter(l => l.id !== id)); };
     
+    // --- GESTIONE SALVATAGGIO MODIFICATA ---
     const saveSession = (final) => {
         if(final.mode === 'Acquisto') {
-            const isWish = final.items.some(i => i.isWishlist);
-            const newBottles = final.items.map(i => ({
-                id: Date.now() + Math.random(), ...i, q: isWish ? 0 : (i.q || 1)
-            }));
-            setCellar([...cellar, ...newBottles]);
-            alert(isWish ? "Aggiunto alla Wishlist! ❤️" : "Aggiunto in Cantina! 📦");
-            setSession(null); setTab('cantina');
+            const itemToSave = final.items[0]; // In modalità Acquisto c'è solo un item alla volta di solito
+            const isWish = itemToSave.isWishlist;
+
+            // Logica per aggiornare o aggiungere
+            let updatedCellar = [...cellar];
+            // Cerchiamo se esiste già l'ID
+            const existingIndex = updatedCellar.findIndex(b => b.id === itemToSave.id);
+
+            if (existingIndex >= 0) {
+                // MODIFICA ESISTENTE
+                updatedCellar[existingIndex] = { ...itemToSave, q: isWish ? 0 : (itemToSave.q || 1) };
+                alert("Bottiglia aggiornata! 🍷");
+            } else {
+                // NUOVA BOTTIGLIA
+                const newBottle = {
+                    ...itemToSave,
+                    id: Date.now() + Math.random(), // Genera ID qui se non c'è
+                    q: isWish ? 0 : (itemToSave.q || 1)
+                };
+                updatedCellar.push(newBottle);
+                alert(isWish ? "Aggiunto alla Wishlist! ❤️" : "Aggiunto in Cantina! 📦");
+            }
+
+            setCellar(updatedCellar);
+            setSession(null); 
+            setTab('cantina');
             return;
         }
+
+        // Salvataggio Log (Diario)
         const idx = logs.findIndex(l => l.id === final.id);
         if (idx >= 0) { const u = [...logs]; u[idx] = final; setLogs(u); } else { setLogs([final, ...logs]); }
         setSession(null); setTab('history');
@@ -305,7 +327,7 @@ function HomeView({ startSession, logs, cellar, setTab }) {
 
 function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
     const [step, setStep] = useState(session.step);
-    const [item, setItem] = useState(session.items[0] || {});
+    const [item, setItem] = useState(session.items[0] || {}); // Qui carica i dati se esistono (edit)
     const [tempGrape, setTempGrape] = useState("");
     const [tempPerc, setTempPerc] = useState("");
     const [tempFriend, setTempFriend] = useState("");
@@ -407,7 +429,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
 
     if (step === 'adding') return (
         <div className="space-y-4 animate-in slide-in-from-right-8 fade-in pb-20">
-            <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-lg dark:text-white">{session.mode === 'Acquisto' ? 'Nuova Bottiglia' : 'Nuovo Inserimento'}</h3></div>
+            <div className="flex justify-between items-center mb-2"><h3 className="font-bold text-lg dark:text-white">{session.mode === 'Acquisto' ? (item.id ? 'Modifica Bottiglia' : 'Nuova Bottiglia') : 'Nuovo Inserimento'}</h3></div>
             
             {/* CIBO & SOMMELIER ACCORDION */}
             {session.mode !== 'Degustazione' && session.mode !== 'Acquisto' && (
@@ -461,6 +483,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-200 dark:border-slate-700 mb-3"><label className="flex justify-between text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wide"><span>Uvaggio</span> <span className={currentGrapeTotal === 100 ? "text-emerald-500" : "text-orange-500"}>{currentGrapeTotal}%</span></label><div className="flex flex-wrap gap-2 mb-2">{(item.grapes || []).map((g, i) => (<div key={i} className="flex items-center gap-1 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 px-2 py-1 rounded-lg text-xs font-bold shadow-sm"><span className="text-indigo-600 dark:text-indigo-400">{g.perc}%</span> <span className="dark:text-gray-300">{g.name}</span> <button onClick={() => removeGrape(i)} className="text-red-400 ml-1">×</button></div>))}</div>{currentGrapeTotal < 100 && (<div className="flex gap-2 items-center"><input className="flex-1 p-2 text-sm border rounded-lg bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="Vitigno" value={tempGrape} onChange={e => setTempGrape(e.target.value)} /><input className="w-16 p-2 text-sm border rounded-lg text-center bg-white dark:bg-slate-700 dark:border-slate-600 dark:text-white" placeholder="%" type="number" value={tempPerc} onChange={e => setTempPerc(e.target.value)} /><button onClick={addGrape} className="bg-slate-800 dark:bg-indigo-600 text-white p-2 rounded-lg font-bold">+</button></div>)}</div>
                 <div className="flex gap-2"><Input label="Alcol %" type="number" value={item.alcohol || ''} onChange={e => setItem({...item, alcohol: e.target.value})} /><Input label="Prezzo €" type="number" value={item.price || ''} onChange={e => setItem({...item, price: e.target.value})} /></div>
+                {session.mode === 'Acquisto' && (<div className="w-full mb-3"><Input label="Quantità Bottiglie" type="number" value={item.q || 1} onChange={e => setItem({...item, q: parseInt(e.target.value)})} /></div>)}
                 <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-200 dark:border-slate-700 mb-3">
                     <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wide flex items-center gap-1"><Icons.Clock size={10}/> Finestra Consumo</label>
                     <div className="flex gap-2 items-center">
@@ -539,7 +562,7 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
                 </div>
             )}
 
-            <Button onClick={addItem} variant="primary">{session.mode === 'Acquisto' ? 'Salva' : 'Salva Prodotto'}</Button>
+            <Button onClick={addItem} variant="primary">{session.mode === 'Acquisto' ? 'Salva Prodotto' : 'Salva nel Diario'}</Button>
         </div>
     );
 
@@ -553,13 +576,10 @@ function SessionManager({ session, setSession, onSave, onCancel, apiKey }) {
 }
 
 function CellarView({ cellar, setCellar, apiKey, startSession }) {
-    const [addMode, setAddMode] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [activeFilter, setActiveFilter] = useState('all'); 
     const [searchQ, setSearchQ] = useState('');
     const [expandedId, setExpandedId] = useState(null);
-    const [newBot, setNewBot] = useState({});
-    const [loading, setLoading] = useState(false);
 
     // FILTRI AVANZATI
     const filtered = useMemo(() => {
@@ -584,10 +604,12 @@ function CellarView({ cellar, setCellar, apiKey, startSession }) {
         });
     }, [cellar, activeFilter, searchQ]);
 
-    const handleAdd = () => { setCellar([...cellar, { ...newBot, id: Date.now() }]); setAddMode(false); setNewBot({}); };
-    const handleClone = (bottle) => { setNewBot({ ...bottle, id: null, q: 1, isWishlist: false }); setAddMode(true); };
-    const handleSmartFill = async () => { if(!newBot.n) return; setLoading(true); try { const prompt = `Analizza vino: "${newBot.n}". JSON STRETTO: {"prod": "Produttore", "year": "Anno", "type": "Rosso/Bianco/Bollicine/Rosato/Birra/Distillato", "drinkFrom": "2024", "drinkTo": "2030"}`; const data = await callGemini(apiKey, prompt); setNewBot(prev => ({ ...prev, p: data.prod, y: data.year, type: data.type, drinkFrom: data.drinkFrom, drinkTo: data.drinkTo })); } catch(e) { alert("Errore AI: " + e.message); } finally { setLoading(false); } };
-    const openBottle = (b) => { if(confirm("Stappi questa bottiglia?")) { if (b.q > 1) setCellar(cellar.map(item => item.id === b.id ? { ...item, q: item.q - 1 } : item)); else setCellar(cellar.filter(item => item.id !== b.id)); startSession('Degustazione', { wine: b.n, prod: b.p, year: b.y, type: b.type, price: b.pr, buyPlace: b.buyPlace }); } };
+    const handleClone = (bottle) => { 
+        // Per clonare, rimuoviamo l'ID così viene trattato come nuovo inserimento
+        const clone = { ...bottle, id: null, q: 1, isWishlist: false };
+        startSession('Acquisto', clone);
+    };
+
     const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id);
 
     return (
@@ -599,7 +621,7 @@ function CellarView({ cellar, setCellar, apiKey, startSession }) {
                 </h2>
                 <div className="flex gap-2">
                     <button onClick={() => setFilterOpen(!filterOpen)} className={`p-2 rounded-full transition-colors ${filterOpen ? 'bg-indigo-100 text-indigo-600' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-white'}`}><Icons.SlidersHorizontal size={20}/></button>
-                    <button onClick={() => setAddMode(!addMode)} className="bg-slate-900 dark:bg-indigo-600 text-white p-2 rounded-full shadow-lg shadow-slate-200 dark:shadow-none"><Icons.Plus size={20}/></button>
+                    <button onClick={() => startSession('Acquisto')} className="bg-slate-900 dark:bg-indigo-600 text-white p-2 rounded-full shadow-lg shadow-slate-200 dark:shadow-none"><Icons.Plus size={20}/></button>
                 </div>
             </div>
             
@@ -623,22 +645,6 @@ function CellarView({ cellar, setCellar, apiKey, startSession }) {
                     </div>
                 </div>
             )}
-
-            {addMode && ( <Card className="animate-in slide-in-from-top-4 border-2 border-slate-900 dark:border-indigo-500"><div className="flex gap-2 items-end"><div className="flex-1"><Input label="Vino" value={newBot.n || ''} onChange={e => setNewBot({...newBot, n: e.target.value})} /></div><button onClick={handleSmartFill} disabled={loading} className="mb-3 p-3 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 rounded-xl"><Icons.Sparkles size={20}/></button></div><div className="flex gap-2"><Input label="Produttore" value={newBot.p || ''} onChange={e => setNewBot({...newBot, p: e.target.value})} /><div className="w-24"><Input label="Anno" type="number" value={newBot.y || ''} onChange={e => setNewBot({...newBot, y: e.target.value})} /></div></div>
-            <div className="flex gap-2">
-                <div className="flex-1"><Input label="Tipologia" placeholder="Rosso..." value={newBot.type || ''} onChange={e => setNewBot({...newBot, type: e.target.value})} /></div>
-                <div className="w-24"><Input label="Qtà" type="number" value={newBot.q || 1} onChange={e => setNewBot({...newBot, q: parseInt(e.target.value)})} /></div>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-gray-200 dark:border-slate-700 mb-3 flex gap-2 items-center justify-between">
-                <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1"><Icons.Clock size={10}/> Bere:</span>
-                <div className="flex gap-1 items-center"><input type="number" className="w-14 p-1 text-sm border rounded text-center bg-white dark:bg-slate-700 dark:text-white dark:border-slate-600" placeholder="2024" value={newBot.drinkFrom || ''} onChange={e => setNewBot({...newBot, drinkFrom: e.target.value})} /><span className="text-xs text-gray-400">-</span><input type="number" className="w-14 p-1 text-sm border rounded text-center bg-white dark:bg-slate-700 dark:text-white dark:border-slate-600" placeholder="2030" value={newBot.drinkTo || ''} onChange={e => setNewBot({...newBot, drinkTo: e.target.value})} /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-                <Input label="Dove l'hai preso?" value={newBot.buyPlace || ''} onChange={e => setNewBot({...newBot, buyPlace: e.target.value})} />
-                <Input label="Posizione" value={newBot.location || ''} onChange={e => setNewBot({...newBot, location: e.target.value})} />
-            </div>
-            <div onClick={() => setNewBot({...newBot, isWishlist: !newBot.isWishlist})} className={`p-3 rounded-xl border flex items-center justify-center gap-2 cursor-pointer mb-3 ${newBot.isWishlist ? 'bg-pink-50 border-pink-200 text-pink-600 dark:bg-pink-900/20' : 'bg-gray-50 border-gray-200 text-gray-500 dark:bg-slate-800'}`}><Icons.Heart size={18} fill={newBot.isWishlist ? "currentColor" : "none"} /><span className="text-sm font-bold">{newBot.isWishlist ? "Solo Desiderio" : "In Cantina"}</span></div>
-            <Button onClick={handleAdd} variant="success">Salva</Button></Card> )}
             
             <div className="space-y-3">
                 {filtered.length === 0 ? <p className="text-center text-gray-400 text-sm py-10">Nessuna bottiglia trovata.</p> : filtered.map(b => {
@@ -670,6 +676,7 @@ function CellarView({ cellar, setCellar, apiKey, startSession }) {
                                 {b.drinkFrom && b.drinkTo && (<div className="mt-1 flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${new Date().getFullYear() >= b.drinkFrom && new Date().getFullYear() <= b.drinkTo ? 'bg-green-500' : (new Date().getFullYear() < b.drinkFrom ? 'bg-yellow-400' : 'bg-red-500')}`}></span><span className="text-[10px] opacity-70">{b.drinkFrom}-{b.drinkTo}</span></div>)}
                                 <div className="flex gap-2 mt-4 pt-2 border-t border-black/5">
                                     <button onClick={(e) => { e.stopPropagation(); startSession('Degustazione', b); }} className="flex-1 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1"><Icons.Wine size={14}/> Bevi</button>
+                                    <button onClick={(e) => { e.stopPropagation(); startSession('Acquisto', b); }} className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-bold flex items-center gap-1"><Icons.Pencil size={14}/> Modifica</button>
                                     <button onClick={(e) => { e.stopPropagation(); handleClone(b); }} className="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg text-xs font-bold flex items-center gap-1"><Icons.Copy size={14}/> Clona</button>
                                     <button onClick={(e) => { e.stopPropagation(); if(confirm("Eliminare?")) setCellar(cellar.filter(x => x.id !== b.id)); }} className="px-3 py-2 bg-red-50 text-red-500 rounded-lg text-xs font-bold"><Icons.Trash2 size={14}/></button>
                                 </div>
