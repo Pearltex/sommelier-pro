@@ -128,7 +128,9 @@ function App() {
     const [tab, setTab] = useState('home');
     const [session, setSession] = useState(null); 
     const [showSettings, setShowSettings] = useState(false);
-    const [isCelebrating, setIsCelebrating] = useState(false); // STATO PER L'ANIMAZIONE
+    // GESTIONE CELEBRAZIONE (pop o ovation)
+    const [celebration, setCelebration] = useState(null); 
+    
     const [darkMode, setDarkMode] = useState(() => { try { return localStorage.getItem('somm_theme') === 'dark'; } catch { return false; } });
     const [apiKey, setApiKey] = useState(() => { try { return localStorage.getItem('somm_apikey') || ""; } catch { return ""; } });
     const [logs, setLogs] = useState(() => { try { return JSON.parse(localStorage.getItem('somm_logs')) || []; } catch { return []; } });
@@ -159,18 +161,23 @@ function App() {
         setTab('session');
     };
 
-    // --- NUOVA FUNZIONE PER BERE RAPIDAMENTE CON ANIMAZIONE ---
-    const handleQuickDrink = (bottle) => {
-        // 1. Attiva l'animazione e il suono
-        setIsCelebrating(true);
-        const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/pop.ogg"); // Suono 'Pop' affidabile
+    // HELPER PER SUONI E FESTA
+    const triggerCelebration = (type) => {
+        let soundUrl = "";
+        if (type === 'pop') soundUrl = "https://actions.google.com/sounds/v1/cartoon/pop.ogg";
+        if (type === 'ovation') soundUrl = "https://actions.google.com/sounds/v1/crowds/human_crowd_shout_cheer_applause.ogg";
+        
+        const audio = new Audio(soundUrl);
         audio.volume = 0.5;
-        audio.play().catch(e => console.log("Audio play failed (user didn't interact?)", e));
+        audio.play().catch(e => console.log("Audio play failed", e));
+        
+        setCelebration({ type });
+        setTimeout(() => setCelebration(null), 3000); // Durata festa
+    };
 
-        // 2. Disattiva animazione dopo 2.5 secondi
-        setTimeout(() => setIsCelebrating(false), 2500);
+    const handleQuickDrink = (bottle) => {
+        triggerCelebration('pop');
 
-        // 3. Logica Database
         const updatedCellar = cellar.map(b => 
             b.id === bottle.id ? { ...b, q: Math.max(0, b.q - 1) } : b
         ).filter(b => b.q > 0);
@@ -221,6 +228,11 @@ function App() {
             return;
         }
 
+        // SALVATAGGIO EVENTO E OVAZIONE
+        if (['Degustazione', 'Pranzo', 'Aperitivo', 'Cena'].includes(final.mode)) {
+            triggerCelebration('ovation');
+        }
+
         const idx = logs.findIndex(l => l.id === final.id);
         if (idx >= 0) { const u = [...logs]; u[idx] = final; setLogs(u); } else { setLogs([final, ...logs]); }
         setSession(null); setTab('history');
@@ -241,7 +253,7 @@ function App() {
     };
 
     const exportBackup = () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.6" }));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ logs, cellar, version: "5.9.7" }));
         const a = document.createElement('a'); a.href = dataStr; a.download = "somm_backup.json"; document.body.appendChild(a); a.click(); a.remove();
     };
     const importBackup = (e) => {
@@ -262,7 +274,7 @@ function App() {
             <div className="w-full max-w-md h-[100dvh] bg-slate-50 dark:bg-slate-950 flex flex-col relative shadow-2xl overflow-hidden border-x border-gray-200 dark:border-slate-800">
                 
                 {/* CELEBRATION OVERLAY */}
-                {isCelebrating && <CelebrationOverlay />}
+                {celebration && <CelebrationOverlay type={celebration.type} />}
 
                 {/* HEADER */}
                 <div className="z-50 px-4 py-3 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900 shrink-0">
@@ -776,13 +788,13 @@ function StatsView({ logs, cellar }) {
     );
 }
 
-// --- COMPONENTE ANIMAZIONE FESTA ---
-const CelebrationOverlay = () => {
-    // Genera 50 coriandoli con colori e posizioni casuali
+// --- COMPONENTE ANIMAZIONE FESTA (FLESSIBILE) ---
+const CelebrationOverlay = ({ type }) => {
+    // Genera 50 coriandoli
     const particles = useMemo(() => Array.from({ length: 50 }).map((_, i) => ({
         id: i,
-        x: (Math.random() - 0.5) * 200, // Direzione X casuale
-        y: (Math.random() - 1) * 200 - 50, // Direzione Y verso l'alto
+        x: (Math.random() - 0.5) * 200, 
+        y: (Math.random() - 1) * 200 - 50, 
         color: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'][Math.floor(Math.random() * 5)],
         size: Math.random() * 8 + 4,
         delay: Math.random() * 0.2
@@ -790,7 +802,7 @@ const CelebrationOverlay = () => {
 
     return (
         <div className="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center">
-            {/* Animazione CSS iniettata */}
+            {/* Animazione CSS */}
             <style>{`
                 @keyframes explode {
                     0% { transform: translate(0, 0) scale(0); opacity: 1; }
@@ -803,7 +815,7 @@ const CelebrationOverlay = () => {
                 }
             `}</style>
             
-            {/* Coriandoli */}
+            {/* Coriandoli (Sempre belli per entrambi i casi) */}
             {particles.map(p => (
                 <div key={p.id} 
                     style={{
@@ -818,15 +830,15 @@ const CelebrationOverlay = () => {
                 />
             ))}
             
-            {/* Scritta Centrale */}
-            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-300 border border-indigo-200 dark:border-indigo-800 text-center">
-                <div className="text-6xl mb-2 animate-bounce">🍾</div>
-                <h2 className="text-2xl font-black text-indigo-600 dark:text-indigo-400">Cin Cin!</h2>
-                <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Bottiglia Stappata!</p>
+            {/* Scritta Centrale Dinamica */}
+            <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-300 border border-indigo-200 dark:border-indigo-800 text-center">
+                <div className="text-6xl mb-3 animate-bounce">{type === 'pop' ? '🍾' : '👏'}</div>
+                <h2 className="text-3xl font-black text-indigo-600 dark:text-indigo-400">{type === 'pop' ? 'Cin Cin!' : 'Ottimo Lavoro!'}</h2>
+                <p className="text-sm font-bold text-gray-500 dark:text-gray-400 mt-1">{type === 'pop' ? 'Bottiglia Stappata!' : 'Evento Registrato!'}</p>
             </div>
 
-            {/* Effetto Spuma (bollicine bianche) */}
-            {Array.from({ length: 20 }).map((_, i) => (
+            {/* Effetto Spuma (bollicine bianche) solo per il POP */}
+            {type === 'pop' && Array.from({ length: 20 }).map((_, i) => (
                 <div key={`bubble-${i}`}
                     className="absolute bg-white/50 rounded-full"
                     style={{
